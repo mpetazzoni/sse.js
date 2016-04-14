@@ -1,25 +1,8 @@
 /**
- * Server Side Events (SSE) client.
- *
- * Because EventSource() suppors neither POST requests nor custom headers.
- * Example usage:
- *
- *   var source = new SSE(url);
- *   source.addEventListener('message', function(data) { ... });
- *   source.stream();
- *
- * To pass headers:
- *
- *   var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
- *
- * To POST data:
- *
- *   var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
- *                              payload: 'Hello, world!'});
- *
- *
- * TODO(mpetazzoni): handle reconnect with Last-Event-ID; handle failures.
+ * Copyright (C) 2016 Maxime Petazzoni <maxime.petazzoni@bulix.org>.
+ * All rights reserved.
  */
+
 exports.SSE = function (url, options) {
   if (!(this instanceof SSE)) {
     return new SSE(url, options);
