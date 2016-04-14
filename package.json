@@ -1,7 +1,7 @@
 {
   "name": "sse.js",
   "version": "0.2.2",
-  "description": "A flexible Server Side Events source",
+  "description": "A flexible Server-Sent Events source; supports POST requests and custom headers",
   "main": "sse.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,6 +13,7 @@
   "keywords": [
     "sse",
     "server-side-events",
+    "server-sent-events",
     "eventsource"
   ],
   "author": "Maxime Petazzoni <maxime.petazzoni@bulix.org> (https://www.bulix.org)",

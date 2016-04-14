@@ -2,10 +2,11 @@ sse.js
 ======
 
 `sse.js` is a flexible `EventSource` replacement for JavaScript designed
-to consume Server Side Events streams with more control and options than
-the standard `EventSource`. The main limitations of `EventSource` are
-that it only supports no-payload GET requests, and does not support
-specifying additional custom headers to the HTTP request.
+to consume Server-Sent Events (SSE) streams with more control and
+options than the standard `EventSource`. The main limitations of
+`EventSource` are that it only supports no-payload GET requests, and
+does not support specifying additional custom headers to the HTTP
+request.
 
 This package is designed to provide a usable replace to `EventSource`
 that makes all of this possible: `SSE`.
@@ -29,11 +30,12 @@ source.stream();
 Listening for specific event types
 ----------------------------------
 
-The Server Side Events specification allows for arbitrary event types,
-as the `event` field of the event. The default event type is `message`,
-so you'll most likely want to register a listener for this kind of
-events. If you expect another type of events, simply register your
-callback with the appropriate event type:
+The [Server-Sent Events
+specification](https://html.spec.whatwg.org/multipage/comms.html#server-sent-events)
+allows for arbitrary event types, as the `event` field of the event. The
+default event type is `message`, so you'll most likely want to register
+a listener for this kind of events. If you expect another type of
+events, simply register your callback with the appropriate event type:
 
 ```js
 var source = new SSE(url);
