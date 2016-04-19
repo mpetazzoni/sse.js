@@ -8,8 +8,14 @@ options than the standard `EventSource`. The main limitations of
 does not support specifying additional custom headers to the HTTP
 request.
 
-This package is designed to provide a usable replace to `EventSource`
-that makes all of this possible: `SSE`.
+This package is designed to provide a usable replacement to
+`EventSource` that makes all of this possible: `SSE`. It is a fully
+compatible `EventSource` polyfill so you should be able to do this if
+you want/need to:
+
+```js
+EventSource = SSE;
+```
 
 Basic usage
 -----------
@@ -19,13 +25,37 @@ one or more listeners, and activate the stream:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('message', function(data) {
+source.addEventListener('message', function(e) {
   // Assuming we receive JSON-encoded data payloads:
-  var payload = JSON.parse(data);
+  var payload = JSON.parse(e.data);
   console.log(payload);
 });
 source.stream();
 ```
+
+Events
+------
+
+`SSE` implements the `EventTarget` interface (just like `EventSource`)
+and emits fully constructed `Event` objects. The type of the event
+corresponds to the Server-Sent Event's _name_, and the event's timestamp
+is the UNIX timestamp of the _reception_ of the event.
+
+Additionally, the events will have the following fields:
+
+- `id`: the event ID, if present; `null` otherwise
+- `data`: the event data, unparsed
+
+`SSE`, like `EventSource`, will emit the following events:
+
+- `open`, when the first block of data is received from the event
+  stream;
+- `error`, if an error occurs while making the request;
+- `readystatechange`, to notify of a change in the ready state of the
+  event source.
+
+Note that all events dispatched by `SSE` will have the event target
+initially set to the `SSE` object itself.
 
 Listening for specific event types
 ----------------------------------
@@ -39,11 +69,21 @@ events, simply register your callback with the appropriate event type:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('status', function(data) {
-  console.log('System status is now: ' + data);
+source.addEventListener('status', function(e) {
+  console.log('System status is now: ' + e.data);
 });
 source.stream();
 ```
+
+You can also register an event listener with the `on<event>` style:
+
+```js
+var source = new SSE(url);
+source.onstatus = function(e) { ... };
+```
+
+You can mix both `on<event>` and `addEventListener()`. The `on<event>`
+handler is always called first if it is defined.
 
 Passing custom headers
 ----------------------
@@ -52,8 +92,8 @@ Passing custom headers
 var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
 ```
 
-Making a POST request
----------------------
+Making a POST request and overriding the HTTP method
+----------------------------------------------------
 
 To make a HTTP POST request, simply specify a `payload` in the options:
 
@@ -62,8 +102,18 @@ var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
                            payload: 'Hello, world!'});
 ```
 
+Alternatively, you can also manually override the HTTP method used to
+perform the request, regardless of the presence of a `payload` option, by
+specifying the `method` option:
+
+```js
+var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
+                           payload: 'Hello, world!',
+                           method: 'GET'});
+```
+
 TODOs and caveats
 -----------------
 
-- XmlHttpRequest error handling
+- Improve XmlHttpRequest error handling and connection states
 - Automatically reconnect with `Last-Event-ID`
