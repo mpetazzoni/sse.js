@@ -2,7 +2,7 @@
   "name": "sse.js",
   "version": "0.3.0",
   "description": "A flexible Server-Sent Events source; supports POST requests and custom headers",
-  "main": "sse.js",
+  "main": "./lib/sse.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +17,7 @@
     "eventsource"
   ],
   "author": "Maxime Petazzoni <maxime.petazzoni@bulix.org> (https://www.bulix.org)",
-  "license": "Apache Software License v2",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/mpetazzoni/sse.js/issues"
   },
