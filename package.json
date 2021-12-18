@@ -15,7 +15,8 @@
     "server-side-events",
     "server-sent-events",
     "eventsource",
-    "ts-sse"
+    "sse-ts",
+    "sse-es6"
   ],
   "author": "Mukesh Agarwal <smartmuki@gmail.com>",
   "license": "Apache-2.0",
