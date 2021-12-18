@@ -1,5 +1,5 @@
 {
-  "name": "sse.ts",
+  "name": "sse-ts",
   "version": "1.0.0",
   "description": "A ES6-based flexible Server-Sent Events source; supports GET and POST requests and custom headers to a SSE endpoint",
   "main": "./lib/sse.ts",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/smartmuki/sse.js"
+    "url": "https://github.com/smartmuki/sse-ts"
   },
   "keywords": [
     "sse",
@@ -24,7 +24,7 @@
   "author": "Mukesh Agarwal <smartmuki@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/smartmuki/sse.ts/issues"
+    "url": "https://github.com/smartmuki/sse-ts/issues"
   },
-  "homepage": "https://github.com/smartmuki/sse.ts"
+  "homepage": "https://github.com/smartmuki/sse-ts"
 }
