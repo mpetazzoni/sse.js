@@ -1,33 +1,39 @@
-# sse.js
+# sse.ts
 
-`sse.js` is a flexible `EventSource` replacement for JavaScript designed
+Forked from `https://github.com/mpetazzoni/sse.js`. 
+Made the library strongly typed and added support for ES6 modules. So this library can now be imported as a ES6 module and compiled with TS. 
+
+`sse.ts` is a strongly-typed ES6 module-based flexible `EventSource` replacement for Typescript designed
 to consume Server-Sent Events (SSE) streams with more control and
 options than the standard `EventSource`. The main limitations of
 `EventSource` are that it only supports no-payload GET requests, and
 does not support specifying additional custom headers to the HTTP
-request.
+request. This library solves the problem by providing:
+- Support for GET and POST requests to a SSE endpoint
+- Support for additional headers that can be passed
+- Support for `withCredentials` flag
 
-This package is designed to provide a usable replacement to
-`EventSource` that makes all of this possible: `SSE`. It is a fully
-compatible `EventSource` polyfill so you should be able to do this if
-you want/need to:
-
-```js
-EventSource = SSE;
-```
 
 ## Basic usage
 
 The most simple way to use `SSE` is to create the `SSE` object, attach
 one or more listeners, and activate the stream:
 
-```js
-var source = new SSE(url);
-source.addEventListener('message', function(e) {
-  // Assuming we receive JSON-encoded data payloads:
-  var payload = JSON.parse(e.data);
-  console.log(payload);
-});
+```ts
+
+const sseOptions: SSEOptions = {
+            method: SSEOptionsMethod.GET
+        };
+
+
+const source = new SSE(backendURL, sseOptions);
+source.addEventListener('message', (event: CustomEventType) => {
+            const dataEvent = event as CustomEventDataType;
+            // Assuming we receive JSON-encoded data payloads:
+            var payload = JSON.parse(dataEvent.data);
+            console.log(payload);
+          });
+
 source.stream();
 ```
 
@@ -38,7 +44,7 @@ and emits fully constructed `Event` objects. The type of the event
 corresponds to the Server-Sent Event's _name_, and the event's timestamp
 is the UNIX timestamp of the _reception_ of the event.
 
-Additionally, the events will have the following fields:
+Additionally, the events will have the following fields if the event type is `CustomEventDataType`:
 
 - `id`: the event ID, if present; `null` otherwise
 - `data`: the event data, unparsed
@@ -63,48 +69,49 @@ default event type is `message`, so you'll most likely want to register
 a listener for this kind of events. If you expect another type of
 events, simply register your callback with the appropriate event type:
 
-```js
-var source = new SSE(url);
-source.addEventListener('status', function(e) {
-  console.log('System status is now: ' + e.data);
-});
-source.stream();
+```ts
+const sseOptions: SSEOptions = {
+            method: SSEOptionsMethod.GET
+        };
+        
+const source = new SSE(backendURL, sseOptions);
+source.addEventListener('status', (event: CustomEventType) => {
+        const dataEvent = event as CustomEventDataType;
+        console.log('System status is now: ' + dataEvent.data);
+        });
+
+        source.stream();
 ```
 
-You can also register an event listener with the `on<event>` style:
-
-```js
-var source = new SSE(url);
-source.onstatus = function(e) { ... };
-```
-
-You can mix both `on<event>` and `addEventListener()`. The `on<event>`
-handler is always called first if it is defined.
 
 ## Passing custom headers
 
-```js
-var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
+```ts
+const sseOptions: SSEOptions = {
+            headers: { 'Content-Type': 'application/json', 'api-key': "apiKey" },
+            method: SSEOptionsMethod.GET,
+        };
+
+const source = new SSE(backendURL, sseOptions);
+        
 ```
 
 ## Making a POST request and overriding the HTTP method
 
 To make a HTTP POST request, simply specify a `payload` in the options:
 
-```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!'});
+```ts
+const sseOptions: SSEOptions = {
+            headers: { 'Content-Type': 'application/json', 'api-key': "apiKey" },
+            method: SSEOptionsMethod.POST,
+            payload: JSON.stringify({
+                foo: "bar"
+            })
+        };
+
+const source = new SSE(backendURL, sseOptions);
 ```
 
-Alternatively, you can also manually override the HTTP method used to
-perform the request, regardless of the presence of a `payload` option, by
-specifying the `method` option:
-
-```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!',
-                           method: 'GET'});
-```
 
 ## `withCredentials` support
 
@@ -118,8 +125,8 @@ Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 | Name              | Description |
 | ----------------- | ----------- |
 | `headers`         | A map of additional headers to use on the HTTP request |
-| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
-| `payload`         | An optional request payload to sent with the request |
+| `method`          | (Required) Override HTTP method (GET or POST) |
+| `payload`         | The request payload to sent with the request |
 | `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
 
 ## TODOs and caveats
