@@ -18,6 +18,9 @@
     "sse-ts",
     "sse-es6"
   ],
+  "publishConfig": {
+     "registry":"https://npm.pkg.github.com"
+   },
   "author": "Mukesh Agarwal <smartmuki@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
