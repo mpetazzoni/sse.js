@@ -19,7 +19,7 @@
     "sse-es6"
   ],
   "publishConfig": {
-     "registry":"https://npm.pkg.github.com"
+     "registry":"https://registry.npmjs.org/"
    },
   "author": "Mukesh Agarwal <smartmuki@gmail.com>",
   "license": "Apache-2.0",
