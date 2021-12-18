@@ -30,6 +30,8 @@ one or more listeners, and activate the stream:
 
 ```ts
 
+import { CustomEventDataType, CustomEventType, SSE, SSEOptions, SSEOptionsMethod } from "sse-ts";
+
 const sseOptions: SSEOptions = {
             method: SSEOptionsMethod.GET
         };
@@ -79,6 +81,8 @@ a listener for this kind of events. If you expect another type of
 events, simply register your callback with the appropriate event type:
 
 ```ts
+import { CustomEventDataType, CustomEventType, SSE, SSEOptions, SSEOptionsMethod } from "sse-ts";
+
 const sseOptions: SSEOptions = {
             method: SSEOptionsMethod.GET
         };
@@ -96,6 +100,8 @@ source.addEventListener('status', (event: CustomEventType) => {
 ## Passing custom headers
 
 ```ts
+import { CustomEventDataType, CustomEventType, SSE, SSEOptions, SSEOptionsMethod } from "sse-ts";
+
 const sseOptions: SSEOptions = {
             headers: { 'Content-Type': 'application/json', 'api-key': "apiKey" },
             method: SSEOptionsMethod.GET,
@@ -110,6 +116,8 @@ const source = new SSE(backendURL, sseOptions);
 To make a HTTP POST request, simply specify a `payload` in the options:
 
 ```ts
+import { CustomEventDataType, CustomEventType, SSE, SSEOptions, SSEOptionsMethod } from "sse-ts";
+
 const sseOptions: SSEOptions = {
             headers: { 'Content-Type': 'application/json', 'api-key': "apiKey" },
             method: SSEOptionsMethod.POST,
