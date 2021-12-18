@@ -10,7 +10,7 @@
 
 const FIELD_SEPARATOR = ':';
 
- enum XHRStates {
+enum XHRStates {
     INITIALIZING = -1,
     CONNECTING = 0,
     OPEN = 1,
@@ -30,6 +30,11 @@ export type CustomEventDataType = CustomEvent & {
     id: string;
 };
 
+export enum SSEOptionsMethod {
+    GET = "GET",
+    POST = "POST"
+}
+
 export type CustomEventType = CustomEvent | CustomEventDataType | CustomEventReadyStateChangeType | CustomEventErrorType;
 
 export interface SSEOptions {
@@ -37,7 +42,7 @@ export interface SSEOptions {
      * A dictionary of key-value pairs.
      * Like: { "Content-type": "application/json" }
      */
-    headers: {[key: string]: string}
+    headers?: { [key: string]: string }
 
     /**
      * The XMLHttpRequest.withCredentials property is a boolean value 
@@ -46,28 +51,29 @@ export interface SSEOptions {
      * authorization headers or TLS client certificates. 
      * Setting withCredentials has no effect on same-site requests.
      */
-    withCredentials: boolean;
+    withCredentials?: boolean;
 
     /**
      * The HTTP method (currently only GET and POST are supported)
+     * [Required].
      */
-    method: string;
+    method: SSEOptionsMethod;
 
     /**
      * The JSON stringified payload representing the request body.
      */
-    payload: string;
+    payload?: string;
 }
 
 export type Callback = (e: CustomEventType) => void;
 
 export class SSE {
-    private listeners: {[key: string]: Callback[]} = {};
+    private listeners: { [key: string]: Callback[] } = {};
     private readyState: XHRStates = XHRStates.INITIALIZING;
     private chunk = '';
     private progress = 0;
     private xhr: XMLHttpRequest = null;
-     
+
     constructor(private url: string, private options: SSEOptions) {
         if (!url) {
             throw new Error("url cannot be null");
