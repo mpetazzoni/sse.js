@@ -1,9 +1,9 @@
-# sse.ts
+# sse-ts
 
 Forked from `https://github.com/mpetazzoni/sse.js`. 
 Made the library strongly typed and added support for ES6 modules. So this library can now be imported as a ES6 module and compiled with TS. 
 
-`sse.ts` is a strongly-typed ES6 module-based flexible `EventSource` replacement for Typescript designed
+`sse-ts` is a strongly-typed ES6 module-based flexible `EventSource` replacement for Typescript designed
 to consume Server-Sent Events (SSE) streams with more control and
 options than the standard `EventSource`. The main limitations of
 `EventSource` are that it only supports no-payload GET requests, and
@@ -13,6 +13,15 @@ request. This library solves the problem by providing:
 - Support for additional headers that can be passed
 - Support for `withCredentials` flag
 
+
+## Installation
+```ts
+npm i sse-ts
+```
+OR
+```ts
+yarn add sse-ts
+```
 
 ## Basic usage
 
