@@ -1,3 +1,6 @@
+Forked from original sse.js repo. Removed the 'error' event being dispatched
+on abort. My opinion is 'abort' is more like a user action than an error.
+
 # sse.js
 
 `sse.js` is a flexible `EventSource` replacement for JavaScript designed
