@@ -106,6 +106,16 @@ var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
                            method: 'GET'});
 ```
 
+## Expected response from server
+
+It is expected that the server will return the data in the following format, as exemplified [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
+
+```
+event: <type>\n
+data: <data>\n
+\n
+```
+
 ## `withCredentials` support
 
 This `EventSource` polyfill supports the `withCredentials` option to
