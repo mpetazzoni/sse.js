@@ -48,6 +48,8 @@ Additionally, the events will have the following fields:
 - `open`, when the first block of data is received from the event
   stream;
 - `error`, if an error occurs while making the request;
+- `abort`, as a response to the stream being explicitely aborted by the
+  client;
 - `readystatechange`, to notify of a change in the ready state of the
   event source.
 
@@ -108,7 +110,8 @@ var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
 
 ## Expected response from server
 
-It is expected that the server will return the data in the following format, as exemplified [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
+It is expected that the server will return the data in the following
+format, as defined [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
 
 ```
 event: <type>\n
