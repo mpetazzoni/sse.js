@@ -1,6 +1,6 @@
 {
   "name": "sse-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A ES6-based flexible Server-Sent Events source; supports GET and POST requests and custom headers to a SSE endpoint",
   "main": "./lib/sse.ts",
   "scripts": {
