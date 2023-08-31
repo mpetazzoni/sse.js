@@ -16,6 +16,12 @@ you want/need to:
 EventSource = SSE;
 ```
 
+## Constructor
+
+```js
+var source = new SSE(url, options);
+```
+
 ## Basic usage
 
 The most simple way to use `SSE` is to create the `SSE` object, attach
@@ -28,6 +34,17 @@ source.addEventListener('message', function(e) {
   var payload = JSON.parse(e.data);
   console.log(payload);
 });
+```
+
+Like `EventSource`, `SSE` will automatically execute the request and
+start streaming. If you want to disable this behavior, and be more
+specific as to when the request should be triggered, you can pass
+the `start: false` option and later call the `stream()` method:
+
+```js
+var source = new SSE(url, {start: false});
+source.addEventListener('message', (e) => { ... });
+// ... later on
 source.stream();
 ```
 
@@ -134,6 +151,7 @@ Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 | `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
 | `payload`         | An optional request payload to sent with the request |
 | `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
+| `start`           | Automatically execute the request and start streaming (defaults to `true`) |
 
 ## TODOs and caveats
 
