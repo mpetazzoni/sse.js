@@ -22,7 +22,7 @@ EventSource = SSE;
 var source = new SSE(url, options);
 ```
 
-## Basic usage
+## Usage
 
 The most simple way to use `SSE` is to create the `SSE` object, attach
 one or more listeners, and activate the stream:
@@ -47,6 +47,42 @@ source.addEventListener('message', (e) => { ... });
 // ... later on
 source.stream();
 ```
+
+### Passing custom headers
+
+```js
+var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
+```
+
+### Making a POST request and overriding the HTTP method
+
+To make a HTTP POST request, simply specify a `payload` in the options:
+
+```js
+var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
+                           payload: 'Hello, world!'});
+```
+
+Alternatively, you can also manually override the HTTP method used to
+perform the request, regardless of the presence of a `payload` option, by
+specifying the `method` option:
+
+```js
+var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
+                           payload: 'Hello, world!',
+                           method: 'GET'});
+```
+
+### Options reference
+
+| Name              | Description |
+| ----------------- | ----------- |
+| `headers`         | A map of additional headers to use on the HTTP request |
+| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
+| `payload`         | An optional request payload to sent with the request |
+| `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
+| `start`           | Automatically execute the request and start streaming (defaults to `true`) |
+| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`) |
 
 ## Events
 
@@ -100,30 +136,6 @@ source.onstatus = function(e) { ... };
 You can mix both `on<event>` and `addEventListener()`. The `on<event>`
 handler is always called first if it is defined.
 
-## Passing custom headers
-
-```js
-var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
-```
-
-## Making a POST request and overriding the HTTP method
-
-To make a HTTP POST request, simply specify a `payload` in the options:
-
-```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!'});
-```
-
-Alternatively, you can also manually override the HTTP method used to
-perform the request, regardless of the presence of a `payload` option, by
-specifying the `method` option:
-
-```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!',
-                           method: 'GET'});
-```
 
 ## Expected response from server
 
@@ -142,16 +154,6 @@ This `EventSource` polyfill supports the `withCredentials` option to
 request that the outgoing HTTP request be made with a CORS credentials
 mode of `include`, as per the [HTML Living
 Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
-
-## Options reference
-
-| Name              | Description |
-| ----------------- | ----------- |
-| `headers`         | A map of additional headers to use on the HTTP request |
-| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
-| `payload`         | An optional request payload to sent with the request |
-| `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
-| `start`           | Automatically execute the request and start streaming (defaults to `true`) |
 
 ## TODOs and caveats
 
