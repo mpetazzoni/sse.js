@@ -10,6 +10,7 @@
     "type": "git",
     "url": "https://github.com/mpetazzoni/sse.js"
   },
+  "types": "types/index.d.ts",
   "keywords": [
     "sse",
     "server-side-events",
@@ -21,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/mpetazzoni/sse.js/issues"
   },
-  "homepage": "https://github.com/mpetazzoni/sse.js"
+  "homepage": "https://github.com/mpetazzoni/sse.js",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
 }
