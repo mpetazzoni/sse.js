@@ -4,13 +4,14 @@
   "description": "A flexible Server-Sent Events source; supports POST requests and custom headers",
   "main": "./lib/sse.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-types": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/mpetazzoni/sse.js"
   },
-  "types": "types/index.d.ts",
+  "types": "types/sse.d.ts",
   "keywords": [
     "sse",
     "server-side-events",
