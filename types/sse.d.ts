@@ -73,7 +73,6 @@ export type SSEOptions = {
  * @param {string} url
  * @param {SSEOptions} options
  * @return {SSE}
- * @constructor {SSEConstructor}
  */
 export var SSE: SSE;
 //# sourceMappingURL=sse.d.ts.map
