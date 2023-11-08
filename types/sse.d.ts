@@ -1,8 +1,9 @@
 export type SSE = {
+    new (url: string, options?: SSEOptions): SSE;
     /**
      * - headers
      */
-    headers: string;
+    headers: SSEHeaders;
     /**
      * - payload as a string
      */
@@ -19,6 +20,12 @@ export type SSE = {
      * - debugging flag
      */
     debug: boolean;
+    FIELD_SEPARATOR: string;
+    listeners: Record<string, Function[]>;
+    xhr: XMLHttpRequest | null;
+    readyState: number;
+    progress: number;
+    chunk: string;
     addEventListener: AddEventListener;
     removeEventListener: RemoveEventListener;
     dispatchEvent: DispatchEvent;
@@ -31,7 +38,7 @@ export type SSE = {
     onerror: OnError;
     onabort: OnAbort;
 };
-export type SSEHeader = {
+export type SSEHeaders = {
     [key: string]: string;
 };
 export type SSEOptions = {
