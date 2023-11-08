@@ -1,0 +1,10 @@
+{
+  "include": ["lib/**/*", "index.d.ts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "types",
+    "declarationMap": true,
+  },
+}
