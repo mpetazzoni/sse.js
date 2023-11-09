@@ -45,23 +45,23 @@ export type SSEOptions = {
     /**
      * - headers
      */
-    headers: SSEHeader;
+    headers?: SSEHeader;
     /**
      * - payload as a string
      */
-    payload: string;
+    payload?: string;
     /**
      * - HTTP Method
      */
-    method: string;
+    method?: string;
     /**
      * - flag, if credentials needed
      */
-    withCredentials: boolean;
+    withCredentials?: boolean;
     /**
      * - debugging flag
      */
-    debug: boolean;
+    debug?: boolean;
 };
 export type _SSEvent = {
     id: string;
