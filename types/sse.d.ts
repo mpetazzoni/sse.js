@@ -45,7 +45,7 @@ export type SSEOptions = {
     /**
      * - headers
      */
-    headers?: SSEHeader;
+    headers?: SSEHeaders;
     /**
      * - payload as a string
      */
