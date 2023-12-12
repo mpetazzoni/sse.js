@@ -5,6 +5,7 @@
   "main": "./lib/sse.js",
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "test": "jest --coverage"
   },
   "repository": {

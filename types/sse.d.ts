@@ -26,6 +26,10 @@ export type SSE = {
     readyState: number;
     progress: number;
     chunk: string;
+    INITIALIZING: -1;
+    CONNECTING: 0;
+    OPEN: 1;
+    CLOSED: 2;
     addEventListener: AddEventListener;
     removeEventListener: RemoveEventListener;
     dispatchEvent: DispatchEvent;
