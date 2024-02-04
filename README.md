@@ -94,6 +94,8 @@ is the UNIX timestamp of the _reception_ of the event.
 Additionally, the events will have the following fields:
 
 - `id`: the event ID, if present; `null` otherwise
+- `lastEventId`: the last seen event ID, or the empty string if no event
+  with an ID was received
 - `data`: the event data, unparsed
 
 `SSE`, like `EventSource`, will emit the following events:
@@ -155,10 +157,18 @@ request that the outgoing HTTP request be made with a CORS credentials
 mode of `include`, as per the [HTML Living
 Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 
+## Reconnecting after failure
+
+SSE.js does not (yet) automatically reconnect on failure; you can listen
+for the `abort` event and decide whether to reconnect and restart the
+event stream by calling `stream()`.
+
+SSE.js _will_ set the `Last-Event-ID` header on reconnection to the last
+seen event ID value (if any), as per the EventSource specification.
+
 ## TODOs and caveats
 
 - Internet Explorer 11 does not support arbitrary values in
   `CustomEvent`s.  A dependency on `custom-event-polyfill` is necessary
   for IE11 compatibility.
 - Improve `XmlHttpRequest` error handling and connection states
-- Automatically reconnect with `Last-Event-ID`
