@@ -1,5 +1,7 @@
 # sse.js
 
+![GitHub License](https://img.shields.io/github/license/mpetazzoni/sse.js) ![NPM Downloads](https://img.shields.io/npm/dm/sse.js)
+
 `sse.js` is a flexible `EventSource` replacement for JavaScript designed
 to consume Server-Sent Events (SSE) streams with more control and
 options than the standard `EventSource`. The main limitations of
