@@ -18,13 +18,15 @@ you want/need to:
 EventSource = SSE;
 ```
 
-## Constructor
+## Usage
+
+### Constructor
 
 ```js
 var source = new SSE(url, options);
 ```
 
-## Usage
+### Getting started
 
 The most simple way to use `SSE` is to create the `SSE` object, attach
 one or more listeners, and activate the stream:
@@ -113,7 +115,7 @@ Additionally, the events will have the following fields:
 Note that all events dispatched by `SSE` will have the event target
 initially set to the `SSE` object itself.
 
-## Listening for specific event types
+### Listening for specific event types
 
 The [Server-Sent Events
 specification](https://html.spec.whatwg.org/multipage/comms.html#server-sent-events)
@@ -140,7 +142,6 @@ source.onstatus = function(e) { ... };
 You can mix both `on<event>` and `addEventListener()`. The `on<event>`
 handler is always called first if it is defined.
 
-
 ## Expected response from server
 
 It is expected that the server will return the data in the following
@@ -152,14 +153,16 @@ data: <data>\n
 \n
 ```
 
-## `withCredentials` support
+## Advanced usage
+
+### `withCredentials` support
 
 This `EventSource` polyfill supports the `withCredentials` option to
 request that the outgoing HTTP request be made with a CORS credentials
 mode of `include`, as per the [HTML Living
 Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 
-## Reconnecting after failure
+### Reconnecting after failure
 
 SSE.js does not (yet) automatically reconnect on failure; you can listen
 for the `abort` event and decide whether to reconnect and restart the
@@ -168,9 +171,25 @@ event stream by calling `stream()`.
 SSE.js _will_ set the `Last-Event-ID` header on reconnection to the last
 seen event ID value (if any), as per the EventSource specification.
 
-## TODOs and caveats
+## Development
+
+### TODOs and caveats
 
 - Internet Explorer 11 does not support arbitrary values in
   `CustomEvent`s.  A dependency on `custom-event-polyfill` is necessary
   for IE11 compatibility.
 - Improve `XmlHttpRequest` error handling and connection states
+
+### Releasing `sse.js`
+
+Increment the package version with `npm version`, and publish to GitHub
+and NPM.js:
+
+```
+$ npm version {major,minor,patch}
+$ git publish --tags
+$ npm publish --otp <otp>
+```
+
+Then, [create a new GitHub release](https://github.com/mpetazzoni/sse.js/releases/new)
+for the new tagged version.
