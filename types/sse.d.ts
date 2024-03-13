@@ -1,4 +1,7 @@
 export type SSE = {
+    /** Constructor. */
+    new (url: string, options?: SSEOptions): SSE;
+
     /**
      * - headers
      */
