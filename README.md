@@ -115,6 +115,28 @@ Additionally, the events will have the following fields:
 Note that all events dispatched by `SSE` will have the event target
 initially set to the `SSE` object itself.
 
+### Response headers and status code
+
+The SSE endpoint's response headers and the status code returned by the
+server are exposed in the `open` event that is fired at the beginning of
+the stream, under the `headers` and `responseCode` properties,
+respectivitely:
+
+```js
+var source = new SSE(url);
+source.addEventListener('open', function(e) {
+  console.log('Got a '
+    + e.data.responseCode
+    + ' response with headers: '
+    + e.data.headers
+  );
+});
+source.stream();
+```
+
+The response headers are represented as a map of (lowercased) header
+names to array of header values.
+
 ### Listening for specific event types
 
 The [Server-Sent Events
@@ -141,6 +163,22 @@ source.onstatus = function(e) { ... };
 
 You can mix both `on<event>` and `addEventListener()`. The `on<event>`
 handler is always called first if it is defined.
+
+## Event stream order
+
+In a regular stream, you should expect to receive events in the
+following order:
+
+1. A `readystatechange` event with a `readyState` of `CONNECTING (0)`;
+1. An `open` event, with the endpoint's `responseCode` and `headers`;
+1. A `readystatechange` event with a `readyState` of `OPEN (1)`;
+1. One `message` event for each received server-sent event, plus the
+   event-type-specific event for the same;
+
+When closing the stream, you should also expect:
+
+1. A `readystatechange` event with a `readyState` of `CLOSED (2)`;
+1. An `abort` event.
 
 ## Expected response from server
 

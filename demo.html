@@ -57,7 +57,7 @@ body { width: 60%; margin: 2em auto; font-family: monospace; }
       function start() {
         content.innerHTML = '';
 
-        source = new SSE(url.value, {start: false});
+        source = new SSE(url.value, {start: false, debug: true});
         source.addEventListener('message', show);
         source.stream();
 
