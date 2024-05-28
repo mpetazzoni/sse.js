@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <title>sse.js test</title>
+    <style type="text/css">
+body { width: 60%; margin: 2em auto; font-family: monospace; }
+#content { display: flex; flex-direction: column-reverse; }
+#content div { border: 1px #eee solid; background: #f5f5f5; padding: 1em; margin: 1em 0; }
+#content span { display: block; text-align: right; color: #ccc; font-size: small; }
+#content pre { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>sse.js streaming demo</h1>
+    </header>
+
+    <main>
+      <section>
+        <label for="url">Enter a SSE source URL:</label>
+        <input type="url" id="url" size="40" required />
+        <input type="button" id="go" value="Start" />
+      </section>
+      <section id="content">
+      </section>
+    </main>
+
+    <script type="module">
+      import { SSE } from './lib/sse.js';
+
+      var url = document.getElementById('url');
+      var button = document.getElementById('go');
+      var content = document.getElementById('content');
+      var source;
+
+      function show(e) {
+        if (typeof e.data === 'string' && e.data.startsWith('{')) {
+          e.data = JSON.parse(e.data);
+        }
+        if (typeof e.data.time === 'number') {
+          e.data.time = new Date(e.data.time * 1000);
+        }
+
+        var el = document.createElement('div');
+
+        var span = document.createElement('span');
+        span.appendChild(document.createTextNode(new Date().toString()));
+        el.appendChild(span);
+
+        var pre = document.createElement('pre');
+        pre.appendChild(document.createTextNode(JSON.stringify(e.data, null, 2)));
+        el.appendChild(pre);
+
+        content.append(el);
+      }
+
+      function start() {
+        content.innerHTML = '';
+
+        source = new SSE(url.value, {start: false});
+        source.addEventListener('message', show);
+        source.stream();
+
+        button.value = 'Stop';
+        button.onclick = reset;
+      }
+
+      function reset() {
+        if (source) {
+          source.close();
+        }
+
+        button.value = 'Start';
+        button.onclick = start;
+      }
+
+      reset();
+    </script>
+  </body>
+</html>
