@@ -191,6 +191,13 @@ data: <data>\n
 \n
 ```
 
+Note that the space after the colon field delimiter is optional. A space
+after the colon, if present, is always removed from the parsed field
+value [as mandated by the SSE specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
+If your SSE server does _not_ output with a space after the colon
+delimiter, it must take care to correctly express field values with
+leading spaces.
+
 ## Advanced usage
 
 ### `withCredentials` support
