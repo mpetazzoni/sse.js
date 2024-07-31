@@ -20,6 +20,23 @@ EventSource = SSE;
 
 ## Usage
 
+### Import
+
+From a module context:
+
+```js
+import { SSE } from './sse.js';
+```
+
+From a non-module context:
+
+```js
+(async () => {
+  const { SSE } = import('./sse.js');
+  window.SSE = SSE;
+})();
+```
+
 ### Constructor
 
 ```js
