@@ -1,84 +1,82 @@
 export type SSE = {
-  /** Constructor. */
-  new (url: string, options?: SSEOptions): SSE;
-
-  /**
-   * - headers
-   */
-  headers: SSEHeaders;
-  /**
-   * - payload as a Blob, ArrayBuffer, Dataview, FormData, URLSearchParams, or string
-   */
-  payload?: Blob | ArrayBuffer | DataView | FormData | URLSearchParams | string;
-  /**
-   * - HTTP Method
-   */
-  method: string;
-  /**
-   * - flag, if credentials needed
-   */
-  withCredentials: boolean;
-  /**
-   * - debugging flag
-   */
-  debug: boolean;
-  FIELD_SEPARATOR: string;
-  listeners: Record<string, Function[]>;
-  xhr: XMLHttpRequest | null;
-  readyState: number;
-  progress: number;
-  chunk: string;
-  INITIALIZING: -1;
-  CONNECTING: 0;
-  OPEN: 1;
-  CLOSED: 2;
-  addEventListener: AddEventListener;
-  removeEventListener: RemoveEventListener;
-  dispatchEvent: DispatchEvent;
-  stream: Stream;
-  close: Close;
-  onmessage: OnMessage;
-  onopen: OnOpen;
-  onload: OnLoad;
-  onreadystatechange: OnReadystatechange;
-  onerror: OnError;
-  onabort: OnAbort;
+    /**
+     * - headers
+     */
+    headers: SSEHeaders;
+    /**
+     * - payload as a string
+     */
+    payload: SSEPayload;
+    /**
+     * - HTTP Method
+     */
+    method: string;
+    /**
+     * - flag, if credentials needed
+     */
+    withCredentials: boolean;
+    /**
+     * - debugging flag
+     */
+    debug: boolean;
+    FIELD_SEPARATOR: string;
+    listeners: Record<string, Function[]>;
+    xhr: XMLHttpRequest | null;
+    readyState: number;
+    progress: number;
+    chunk: string;
+    INITIALIZING: -1;
+    CONNECTING: 0;
+    OPEN: 1;
+    CLOSED: 2;
+    addEventListener: AddEventListener;
+    removeEventListener: RemoveEventListener;
+    dispatchEvent: DispatchEvent;
+    stream: Stream;
+    close: Close;
+    onmessage: OnMessage;
+    onopen: OnOpen;
+    onload: OnLoad;
+    onreadystatechange: OnReadystatechange;
+    onerror: OnError;
+    onabort: OnAbort;
 };
 export type SSEHeaders = {
-  [key: string]: string;
+    [key: string]: string;
 };
+export type SSEPayload = Document | Blob | ArrayBuffer | TypedArray | DataView | FormData | URLSearchParams | string | null;
 export type SSEOptions = {
-  /**
-   * - headers
-   */
-  headers?: SSEHeaders;
-  /**
-   * - payload as a Blob, ArrayBuffer, Dataview, FormData, URLSearchParams, or string
-   */
-  payload?: Blob | ArrayBuffer | DataView | FormData | URLSearchParams | string;
-  /**
-   * - HTTP Method
-   */
-  method?: string;
-  /**
-   * - flag, if credentials needed
-   */
-  withCredentials?: boolean;
-  /**
-   * - flag, if streaming should start automatically
-   */
-  start?: boolean;
-  /**
-   * - debugging flag
-   */
-  debug?: boolean;
+    /**
+     * - headers
+     */
+    headers?: SSEHeaders;
+    /**
+     * - payload as a string
+     */
+    payload?: SSEPayload;
+    /**
+     * - HTTP Method
+     */
+    method?: string;
+    /**
+     * - flag, if credentials needed
+     */
+    withCredentials?: boolean;
+    /**
+     * - flag, if streaming should start automatically
+     */
+    start?: boolean;
+    /**
+     * - debugging flag
+     */
+    debug?: boolean;
 };
 export type _SSEvent = {
-  id: string;
-  data: string;
+    id: string;
+    data: string;
 };
 export type _ReadyStateEvent = {
-  readyState: number;
+    readyState: number;
 };
 export type SSEvent = Event & _SSEvent;
 export type ReadyStateEvent = SSEvent & _ReadyStateEvent;
