@@ -106,7 +106,7 @@ var source = new SSE(url, {
 var source = new SSE(url, {
   autoReconnect: true, // Enable auto-reconnect
   reconnectDelay: 3000, // Wait 3 seconds before reconnecting
-  useLastEventId: true, // Send Last-Event-ID header on reconnect
+  useLastEventId: true, // Send Last-Event-ID header on reconnect (recommended)
 });
 ```
 
@@ -125,19 +125,103 @@ if (source.autoReconnect) {
 }
 ```
 
-### Options reference
+### Reconnecting after failure
 
-| Name              | Description                                                                                              |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| `headers`         | A map of additional headers to use on the HTTP request                                                   |
-| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
-| `payload`         | An optional request payload to sent with the request                                                     |
-| `withCredentials` | If set to `true`, CORS requests will be set to include credentials                                       |
-| `start`           | Automatically execute the request and start streaming (defaults to `true`)                               |
-| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`)      |
-| `autoReconnect`   | If set to `true`, automatically attempt to reconnect when the connection is lost (defaults to `false`)   |
-| `reconnectDelay`  | Delay in milliseconds before attempting to reconnect (defaults to `3000`)                                |
-| `useLastEventId`  | If set to `true`, send the Last-Event-ID header with reconnection requests (defaults to `true`)          |
+There are two ways to handle reconnection after a connection failure:
+
+1. **Automatic Reconnection (Recommended)**
+
+```js
+const source = new SSE(url, {
+  autoReconnect: true,
+  reconnectDelay: 3000,
+});
+
+source.addEventListener("error", (e) => {
+  console.log(`Connection lost. Will automatically reconnect in 3s...`);
+});
+```
+
+2. **Manual Reconnection**
+
+```js
+const source = new SSE(url, { autoReconnect: false });
+
+source.addEventListener("error", (e) => {
+  console.log("Connection lost");
+  // Wait a bit then reconnect
+  setTimeout(() => {
+    source.stream();
+  }, 3000);
+});
+
+// Or reconnect on abort
+source.addEventListener("abort", () => {
+  source.stream();
+});
+```
+
+### Last-Event-ID Support
+
+The `Last-Event-ID` header is a crucial part of the SSE specification that helps maintain message continuity across reconnections. When enabled (default), `SSE` will automatically:
+
+1. Track the last received event ID
+2. Send this ID in the `Last-Event-ID` header on reconnection
+3. Allow the server to resume the event stream from where it left off
+
+This behavior can be controlled with the `useLastEventId` option:
+
+```js
+const source = new SSE(url, {
+  useLastEventId: true, // Recommended: follows SSE specification
+});
+```
+
+It's strongly recommended to keep `useLastEventId` enabled as it's part of the SSE specification and ensures no events are lost during reconnection. Only disable it if you have specific requirements that conflict with this behavior.
+
+You can access the last event ID at any time:
+
+```js
+console.log("Last received event ID:", source.lastEventId);
+```
+
+Example of proper Last-Event-ID handling:
+
+```js
+const source = new SSE("/api/events", {
+  autoReconnect: true,
+  useLastEventId: true,
+  headers: { "Client-ID": "dashboard-1" },
+});
+
+source.addEventListener("message", (e) => {
+  if (e.id) {
+    console.log(`Received event ${e.id}`);
+    // The lastEventId is automatically tracked
+    // and will be sent on next reconnection
+  }
+});
+
+source.addEventListener("open", (e) => {
+  if (source.lastEventId) {
+    console.log(`Reconnected, resuming from event ${source.lastEventId}`);
+  }
+});
+```
+
+## Options reference
+
+| Name              | Description                                                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `headers`         | A map of additional headers to use on the HTTP request                                                                                                                                                                       |
+| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`)                                                                                                                     |
+| `payload`         | An optional request payload to sent with the request                                                                                                                                                                         |
+| `withCredentials` | If set to `true`, CORS requests will be set to include credentials                                                                                                                                                           |
+| `start`           | Automatically execute the request and start streaming (defaults to `true`)                                                                                                                                                   |
+| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`)                                                                                                                          |
+| `autoReconnect`   | If set to `true`, automatically attempt to reconnect when the connection is lost or errors occur (defaults to `false`). Reconnection is disabled when `close()` is called                                                    |
+| `reconnectDelay`  | Number of milliseconds to wait before attempting to reconnect after a connection loss (defaults to `3000`). Only used when `autoReconnect` is `true`                                                                         |
+| `useLastEventId`  | If set to `true` (default), follows the SSE specification by sending the Last-Event-ID header on reconnection attempts. This helps maintain message continuity by allowing the server to resume from the last received event |
 
 ## Events
 
@@ -256,23 +340,12 @@ request that the outgoing HTTP request be made with a CORS credentials
 mode of `include`, as per the [HTML Living
 Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 
-### Reconnecting after failure
+### Browser Compatibility
 
-SSE.js does not (yet) automatically reconnect on failure; you can listen
-for the `abort` event and decide whether to reconnect and restart the
-event stream by calling `stream()`.
+- Modern browsers: Full support for all features
+- Internet Explorer 11: Requires `custom-event-polyfill` for proper `CustomEvent` support
 
-SSE.js _will_ set the `Last-Event-ID` header on reconnection to the last
-seen event ID value (if any), as per the EventSource specification.
-
-## Development
-
-### TODOs and caveats
-
-- Internet Explorer 11 does not support arbitrary values in
-  `CustomEvent`s. A dependency on `custom-event-polyfill` is necessary
-  for IE11 compatibility.
-- Improve `XmlHttpRequest` error handling and connection states
+## Development and Release
 
 ### Releasing `sse.js`
 
