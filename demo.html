@@ -49,6 +49,17 @@
       .controls input[type="number"] {
         width: 6em;
       }
+      .controls-group {
+        border: 1px solid #eee;
+        padding: 1em;
+        margin: 1em 0;
+        border-radius: 4px;
+      }
+      .controls-group h3 {
+        margin: 0 0 1em 0;
+        color: #666;
+        font-size: 0.9em;
+      }
     </style>
   </head>
   <body>
@@ -61,21 +72,31 @@
         <label for="url">Enter a SSE source URL:</label>
         <input type="url" id="url" size="40" required />
         <input type="button" id="go" value="Start" />
-        <div class="controls">
-          <label>
-            <input type="checkbox" id="auto-reconnect" checked />
-            Auto-reconnect
-          </label>
-          <label>
-            <input
-              type="number"
-              id="reconnect-delay"
-              value="3000"
-              min="500"
-              step="500"
-            />
-            ms delay
-          </label>
+
+        <div class="controls-group">
+          <h3>Connection Settings</h3>
+          <div class="controls">
+            <label>
+              <input type="checkbox" id="auto-reconnect" checked />
+              Auto-reconnect
+            </label>
+            <label>
+              <input
+                type="number"
+                id="reconnect-delay"
+                value="3000"
+                min="500"
+                step="500"
+              />
+              ms delay
+            </label>
+          </div>
+          <div class="controls">
+            <label>
+              <input type="checkbox" id="use-last-event-id" />
+              Use Last-Event-ID header
+            </label>
+          </div>
         </div>
       </section>
       <section id="content"></section>
@@ -89,6 +110,7 @@
       var content = document.getElementById("content");
       var autoReconnect = document.getElementById("auto-reconnect");
       var reconnectDelay = document.getElementById("reconnect-delay");
+      var useLastEventId = document.getElementById("use-last-event-id");
       var source;
 
       function addMessage(data, type = "") {
@@ -149,6 +171,7 @@
           debug: true,
           autoReconnect: autoReconnect.checked,
           reconnectDelay: parseInt(reconnectDelay.value, 10),
+          useLastEventId: useLastEventId.checked,
         };
 
         if (options.autoReconnect) {
