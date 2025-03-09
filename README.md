@@ -112,6 +112,7 @@ var source = new SSE(url, {
 ```
 
 When auto-reconnect is enabled:
+
 - The connection will automatically attempt to reconnect after any connection loss or error
 - Each reconnection attempt will wait for the specified delay (in milliseconds)
 - If maxRetries is set, reconnection attempts will stop after that number is reached
@@ -120,6 +121,7 @@ When auto-reconnect is enabled:
 - The retry count is reset whenever a successful connection is established
 
 You can dynamically check the auto-reconnect and retry status:
+
 ```js
 if (source.autoReconnect) {
   console.log("Auto-reconnect is enabled");
@@ -146,9 +148,13 @@ source.addEventListener("error", (e) => {
   if (source.maxRetries && source.retryCount >= source.maxRetries) {
     console.log("Max retries reached, connection permanently closed");
   } else {
-    console.log(`Connection lost. ${source.maxRetries ? 
-      `Attempt ${source.retryCount + 1}/${source.maxRetries}` : 
-      'Will'} reconnect in 3s...`);
+    console.log(
+      `Connection lost. ${
+        source.maxRetries
+          ? `Attempt ${source.retryCount + 1}/${source.maxRetries}`
+          : "Will"
+      } reconnect in 3s...`
+    );
   }
 });
 ```
@@ -177,7 +183,7 @@ source.addEventListener("abort", () => {
 The `Last-Event-ID` header is a crucial part of the SSE specification that helps maintain message continuity across reconnections. When enabled (default), `SSE` will automatically:
 
 1. Track the last received event ID
-2. Send this ID in the `Last-Event-ID` header on reconnection
+2. Send this ID in the `Last-Event-ID` header on reconnection attempts
 3. Allow the server to resume the event stream from where it left off
 
 This behavior can be controlled with the `useLastEventId` option:
@@ -220,20 +226,74 @@ source.addEventListener("open", (e) => {
 });
 ```
 
+## Event stream order
+
+The SSE events are dispatched in the following order:
+
+| Event              | Description                   | When                                          | Event Properties            |
+| ------------------ | ----------------------------- | --------------------------------------------- | --------------------------- |
+| `readystatechange` | State changed to `CONNECTING` | When `stream()` is called                     | `readyState: 0`             |
+| `open`             | Connection established        | When server response headers are received     | `responseCode`, `headers`   |
+| `readystatechange` | State changed to `OPEN`       | After connection is established               | `readyState: 1`             |
+| `message`          | Data received                 | When server sends data                        | `data`, `id`, `lastEventId` |
+| `error`            | Connection error              | When connection fails or server returns error | `responseCode`, `data`      |
+| `readystatechange` | State changed to `CLOSED`     | When connection is closed                     | `readyState: 2`             |
+| `abort`            | Connection aborted            | When `close()` is called                      | None                        |
+
+When auto-reconnect is enabled, the following additional events may occur:
+
+| Event              | Description                   | When                             | Event Properties                      |
+| ------------------ | ----------------------------- | -------------------------------- | ------------------------------------- |
+| `error`            | Reconnection attempt          | After reconnect delay            | `data` (includes retry count)         |
+| `readystatechange` | State changed to `CONNECTING` | When reconnection starts         | `readyState: 0`                       |
+| `error`            | Max retries reached           | When max retry count is exceeded | `data` (includes max retries message) |
+
+All events also include a `source` property referencing the SSE instance that dispatched the event.
+
+Note: When a server-sent event specifies an `event` field, both the `message` event and an event with the specified type will be dispatched. For example, if the server sends:
+
+```
+event: update
+data: {"status": "completed"}
+```
+
+Two events will be dispatched:
+
+1. An `update` event with `data: {"status": "completed"}`
+2. A `message` event with the same data
+
+## Expected response from server
+
+It is expected that the server will return the data in the following
+format, as defined [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
+
+```
+event: <type>\n
+data: <data>\n
+\n
+```
+
+Note that the space after the colon field delimiter is optional. A space
+after the colon, if present, is always removed from the parsed field
+value [as mandated by the SSE specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
+If your SSE server does _not_ output with a space after the colon
+delimiter, it must take care to correctly express field values with
+leading spaces.
+
 ## Options reference
 
-| Name              | Description                                                                                                                                                                                                                  |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `headers`         | A map of additional headers to use on the HTTP request                                                                                                                                                                       |
-| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`)                                                                                                                     |
-| `payload`         | An optional request payload to sent with the request                                                                                                                                                                         |
-| `withCredentials` | If set to `true`, CORS requests will be set to include credentials                                                                                                                                                           |
-| `start`           | Automatically execute the request and start streaming (defaults to `true`)                                                                                                                                                   |
-| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`)                                                                                                                          |
-| `autoReconnect`   | If set to `true`, automatically attempt to reconnect when the connection is lost or errors occur (defaults to `false`). Reconnection is disabled when `close()` is called                                                    |
-| `reconnectDelay`  | Number of milliseconds to wait before attempting to reconnect after a connection loss (defaults to `3000`). Only used when `autoReconnect` is `true`                                                                         |
-| `maxRetries`      | Maximum number of reconnection attempts before giving up (defaults to `null` for unlimited retries). Only used when `autoReconnect` is `true`. The retry count resets after a successful connection                          |
-| `useLastEventId`  | If set to `true` (default), follows the SSE specification by sending the Last-Event-ID header on reconnection attempts. This helps maintain message continuity by allowing the server to resume from the last received event |
+| Name              | Description                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `headers`         | An object containing the request headers to send with the request. Example: `{'Authorization': 'Bearer 0123456789'}` |
+| `payload`         | The request payload to send with the request. Example: `'{"filter": "temperature > 25"}'`                            |
+| `method`          | The HTTP method to use. If not specified, defaults to `POST` if there is a payload, otherwise `GET`                  |
+| `withCredentials` | Send cookies with the request. Default: `false`                                                                      |
+| `start`           | Start streaming immediately. Default: `true`                                                                         |
+| `debug`           | Enable debug logging. Default: `false`                                                                               |
+| `autoReconnect`   | Automatically attempt to reconnect when connection is lost. Default: `false`                                         |
+| `reconnectDelay`  | Time in milliseconds to wait before attempting to reconnect. Default: `3000`                                         |
+| `maxRetries`      | Maximum number of reconnection attempts. Set to `null` for unlimited retries. Default: `null`                        |
+| `useLastEventId`  | Send the `Last-Event-ID` header on reconnection to resume the stream. Default: `true`                                |
 
 ## Events
 
@@ -309,41 +369,31 @@ source.onstatus = function(e) { ... };
 You can mix both `on<event>` and `addEventListener()`. The `on<event>`
 handler is always called first if it is defined.
 
-## Event stream order
-
-In a regular stream, you should expect to receive events in the
-following order:
-
-1. A `readystatechange` event with a `readyState` of `CONNECTING (0)`;
-1. An `open` event, with the endpoint's `responseCode` and `headers`;
-1. A `readystatechange` event with a `readyState` of `OPEN (1)`;
-1. One `message` event for each received server-sent event, plus the
-   event-type-specific event for the same;
-
-When closing the stream, you should also expect:
-
-1. A `readystatechange` event with a `readyState` of `CLOSED (2)`;
-1. An `abort` event.
-
-## Expected response from server
-
-It is expected that the server will return the data in the following
-format, as defined [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
-
-```
-event: <type>\n
-data: <data>\n
-\n
-```
-
-Note that the space after the colon field delimiter is optional. A space
-after the colon, if present, is always removed from the parsed field
-value [as mandated by the SSE specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
-If your SSE server does _not_ output with a space after the colon
-delimiter, it must take care to correctly express field values with
-leading spaces.
-
 ## Advanced usage
+
+### Auto-reconnect behavior
+
+When `autoReconnect` is enabled, SSE will automatically attempt to reconnect when the connection is lost or an error occurs. This behavior can be fine-tuned using several options:
+
+```javascript
+const source = new SSE("/events", {
+  autoReconnect: true, // Enable automatic reconnection
+  reconnectDelay: 5000, // Wait 5 seconds between attempts
+  maxRetries: 3, // Only try 3 times before giving up
+  useLastEventId: true, // Send Last-Event-ID to resume stream
+});
+
+source.addEventListener("error", (e) => {
+  // Error events will include retry information
+  console.log("Connection lost, retrying...");
+  console.log(`Attempt ${source.retryCount} of ${source.maxRetries || "∞"}`);
+});
+```
+
+The retry count is reset to 0 after a successful connection. Auto-reconnect is automatically disabled in two cases:
+
+1. When `maxRetries` is reached (if set)
+2. When `close()` is explicitly called
 
 ### `withCredentials` support
 
