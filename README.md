@@ -106,22 +106,26 @@ var source = new SSE(url, {
 var source = new SSE(url, {
   autoReconnect: true, // Enable auto-reconnect
   reconnectDelay: 3000, // Wait 3 seconds before reconnecting
+  maxRetries: null, // Retry indefinitely (set a number to limit retries)
   useLastEventId: true, // Send Last-Event-ID header on reconnect (recommended)
 });
 ```
 
 When auto-reconnect is enabled:
-
 - The connection will automatically attempt to reconnect after any connection loss or error
 - Each reconnection attempt will wait for the specified delay (in milliseconds)
-- If `useLastEventId` is true, the last received event ID will be sent in the `Last-Event-ID` header
+- If maxRetries is set, reconnection attempts will stop after that number is reached
+- If useLastEventId is true, the last received event ID will be sent in the `Last-Event-ID` header
 - Auto-reconnect is automatically disabled when calling `close()` on the SSE instance
+- The retry count is reset whenever a successful connection is established
 
-You can dynamically check the auto-reconnect status through the `autoReconnect` property:
-
+You can dynamically check the auto-reconnect and retry status:
 ```js
 if (source.autoReconnect) {
   console.log("Auto-reconnect is enabled");
+  if (source.maxRetries) {
+    console.log(`Attempt ${source.retryCount} of ${source.maxRetries}`);
+  }
 }
 ```
 
@@ -135,10 +139,17 @@ There are two ways to handle reconnection after a connection failure:
 const source = new SSE(url, {
   autoReconnect: true,
   reconnectDelay: 3000,
+  maxRetries: 5, // Stop after 5 failed attempts
 });
 
 source.addEventListener("error", (e) => {
-  console.log(`Connection lost. Will automatically reconnect in 3s...`);
+  if (source.maxRetries && source.retryCount >= source.maxRetries) {
+    console.log("Max retries reached, connection permanently closed");
+  } else {
+    console.log(`Connection lost. ${source.maxRetries ? 
+      `Attempt ${source.retryCount + 1}/${source.maxRetries}` : 
+      'Will'} reconnect in 3s...`);
+  }
 });
 ```
 
@@ -221,6 +232,7 @@ source.addEventListener("open", (e) => {
 | `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`)                                                                                                                          |
 | `autoReconnect`   | If set to `true`, automatically attempt to reconnect when the connection is lost or errors occur (defaults to `false`). Reconnection is disabled when `close()` is called                                                    |
 | `reconnectDelay`  | Number of milliseconds to wait before attempting to reconnect after a connection loss (defaults to `3000`). Only used when `autoReconnect` is `true`                                                                         |
+| `maxRetries`      | Maximum number of reconnection attempts before giving up (defaults to `null` for unlimited retries). Only used when `autoReconnect` is `true`. The retry count resets after a successful connection                          |
 | `useLastEventId`  | If set to `true` (default), follows the SSE specification by sending the Last-Event-ID header on reconnection attempts. This helps maintain message continuity by allowing the server to resume from the last received event |
 
 ## Events

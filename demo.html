@@ -97,6 +97,18 @@
               Use Last-Event-ID header
             </label>
           </div>
+          <div class="controls">
+            <label>
+              <input
+                type="number"
+                id="max-retries"
+                value=""
+                min="1"
+                placeholder="∞"
+              />
+              max retries (empty = unlimited)
+            </label>
+          </div>
         </div>
       </section>
       <section id="content"></section>
@@ -111,6 +123,7 @@
       var autoReconnect = document.getElementById("auto-reconnect");
       var reconnectDelay = document.getElementById("reconnect-delay");
       var useLastEventId = document.getElementById("use-last-event-id");
+      var maxRetries = document.getElementById("max-retries");
       var source;
 
       function addMessage(data, type = "") {
@@ -172,13 +185,14 @@
           autoReconnect: autoReconnect.checked,
           reconnectDelay: parseInt(reconnectDelay.value, 10),
           useLastEventId: useLastEventId.checked,
+          maxRetries: maxRetries.value ? parseInt(maxRetries.value, 10) : null,
         };
 
         if (options.autoReconnect) {
-          addMessage(
-            `Auto-reconnect enabled (${options.reconnectDelay}ms delay)`,
-            "info"
-          );
+          const retryMsg = options.maxRetries
+            ? `Auto-reconnect enabled (${options.reconnectDelay}ms delay, max ${options.maxRetries} retries)`
+            : `Auto-reconnect enabled (${options.reconnectDelay}ms delay, unlimited retries)`;
+          addMessage(retryMsg, "info");
         }
 
         source = new SSE(url.value, options);
@@ -193,12 +207,15 @@
           const msg =
             "Connection error: " + (e.responseCode || "Unknown error");
           addMessage(msg, "error");
-          // Only show reconnect message if auto-reconnect is still enabled
+
           if (source.autoReconnect) {
-            addMessage(
-              `Will attempt to reconnect in ${options.reconnectDelay}ms`,
-              "info"
-            );
+            const nextAttempt = source.retryCount + 1;
+            const retryMsg = source.maxRetries && nextAttempt <= source.maxRetries
+              ? `Will attempt to reconnect in ${options.reconnectDelay}ms (attempt ${nextAttempt}/${source.maxRetries})`
+              : source.maxRetries
+              ? `Max retries (${source.maxRetries}) reached, connection permanently closed`
+              : `Will attempt to reconnect in ${options.reconnectDelay}ms`;
+            addMessage(retryMsg, "info");
           }
         });
 
