@@ -25,14 +25,14 @@ EventSource = SSE;
 From a module context:
 
 ```js
-import { SSE } from './sse.js';
+import { SSE } from "./sse.js";
 ```
 
 From a non-module context:
 
 ```js
 (async () => {
-  const { SSE } = import('./sse.js');
+  const { SSE } = import("./sse.js");
   window.SSE = SSE;
 })();
 ```
@@ -50,7 +50,7 @@ one or more listeners, and activate the stream:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('message', function(e) {
+source.addEventListener("message", function (e) {
   // Assuming we receive JSON-encoded data payloads:
   var payload = JSON.parse(e.data);
   console.log(payload);
@@ -72,7 +72,7 @@ source.stream();
 ### Passing custom headers
 
 ```js
-var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
+var source = new SSE(url, { headers: { Authorization: "Bearer 0xdeadbeef" } });
 ```
 
 ### Making a POST request and overriding the HTTP method
@@ -80,8 +80,10 @@ var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
 To make a HTTP POST request, simply specify a `payload` in the options:
 
 ```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!'});
+var source = new SSE(url, {
+  headers: { "Content-Type": "text/plain" },
+  payload: "Hello, world!",
+});
 ```
 
 Alternatively, you can also manually override the HTTP method used to
@@ -89,21 +91,53 @@ perform the request, regardless of the presence of a `payload` option, by
 specifying the `method` option:
 
 ```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!',
-                           method: 'GET'});
+var source = new SSE(url, {
+  headers: { "Content-Type": "text/plain" },
+  payload: "Hello, world!",
+  method: "GET",
+});
+```
+
+### Auto-reconnect functionality
+
+`SSE` supports automatic reconnection when the connection is lost or encounters an error. This can be enabled through the options:
+
+```js
+var source = new SSE(url, {
+  autoReconnect: true, // Enable auto-reconnect
+  reconnectDelay: 3000, // Wait 3 seconds before reconnecting
+  useLastEventId: true, // Send Last-Event-ID header on reconnect
+});
+```
+
+When auto-reconnect is enabled:
+
+- The connection will automatically attempt to reconnect after any connection loss or error
+- Each reconnection attempt will wait for the specified delay (in milliseconds)
+- If `useLastEventId` is true, the last received event ID will be sent in the `Last-Event-ID` header
+- Auto-reconnect is automatically disabled when calling `close()` on the SSE instance
+
+You can dynamically check the auto-reconnect status through the `autoReconnect` property:
+
+```js
+if (source.autoReconnect) {
+  console.log("Auto-reconnect is enabled");
+}
 ```
 
 ### Options reference
 
-| Name              | Description |
-| ----------------- | ----------- |
-| `headers`         | A map of additional headers to use on the HTTP request |
+| Name              | Description                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `headers`         | A map of additional headers to use on the HTTP request                                                   |
 | `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
-| `payload`         | An optional request payload to sent with the request |
-| `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
-| `start`           | Automatically execute the request and start streaming (defaults to `true`) |
-| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`) |
+| `payload`         | An optional request payload to sent with the request                                                     |
+| `withCredentials` | If set to `true`, CORS requests will be set to include credentials                                       |
+| `start`           | Automatically execute the request and start streaming (defaults to `true`)                               |
+| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`)      |
+| `autoReconnect`   | If set to `true`, automatically attempt to reconnect when the connection is lost (defaults to `false`)   |
+| `reconnectDelay`  | Delay in milliseconds before attempting to reconnect (defaults to `3000`)                                |
+| `useLastEventId`  | If set to `true`, send the Last-Event-ID header with reconnection requests (defaults to `true`)          |
 
 ## Events
 
@@ -141,11 +175,9 @@ respectivitely:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('open', function(e) {
-  console.log('Got a '
-    + e.data.responseCode
-    + ' response with headers: '
-    + e.data.headers
+source.addEventListener("open", function (e) {
+  console.log(
+    "Got a " + e.data.responseCode + " response with headers: " + e.data.headers
   );
 });
 source.stream();
@@ -165,8 +197,8 @@ events, simply register your callback with the appropriate event type:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('status', function(e) {
-  console.log('System status is now: ' + e.data);
+source.addEventListener("status", function (e) {
+  console.log("System status is now: " + e.data);
 });
 source.stream();
 ```
@@ -238,7 +270,7 @@ seen event ID value (if any), as per the EventSource specification.
 ### TODOs and caveats
 
 - Internet Explorer 11 does not support arbitrary values in
-  `CustomEvent`s.  A dependency on `custom-event-polyfill` is necessary
+  `CustomEvent`s. A dependency on `custom-event-polyfill` is necessary
   for IE11 compatibility.
 - Improve `XmlHttpRequest` error handling and connection states
 
