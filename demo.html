@@ -193,7 +193,8 @@
           const msg =
             "Connection error: " + (e.responseCode || "Unknown error");
           addMessage(msg, "error");
-          if (options.autoReconnect) {
+          // Only show reconnect message if auto-reconnect is still enabled
+          if (source.autoReconnect) {
             addMessage(
               `Will attempt to reconnect in ${options.reconnectDelay}ms`,
               "info"
