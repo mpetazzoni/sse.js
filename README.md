@@ -242,11 +242,16 @@ The SSE events are dispatched in the following order:
 
 When auto-reconnect is enabled, the following additional events may occur:
 
-| Event              | Description                   | When                             | Event Properties                      |
-| ------------------ | ----------------------------- | -------------------------------- | ------------------------------------- |
-| `error`            | Reconnection attempt          | After reconnect delay            | `data` (includes retry count)         |
-| `readystatechange` | State changed to `CONNECTING` | When reconnection starts         | `readyState: 0`                       |
-| `error`            | Max retries reached           | When max retry count is exceeded | `data` (includes max retries message) |
+| Event              | Description                   | When                             | Event Properties |
+| ------------------ | ----------------------------- | -------------------------------- | --------------- |
+| `readystatechange` | State changed to `CONNECTING` | When reconnection starts         | `readyState: 0` |
+| `error`            | Connection error              | When connection fails            | None            |
+| `readystatechange` | State changed to `CLOSED`     | After error, before next attempt | `readyState: 2` |
+
+The cycle repeats until either:
+- A successful connection is established (retry count resets to 0)
+- Max retries is reached (auto-reconnect is disabled)
+- `close()` is called (auto-reconnect is disabled)
 
 All events also include a `source` property referencing the SSE instance that dispatched the event.
 
@@ -380,13 +385,16 @@ const source = new SSE("/events", {
   autoReconnect: true, // Enable automatic reconnection
   reconnectDelay: 5000, // Wait 5 seconds between attempts
   maxRetries: 3, // Only try 3 times before giving up
-  useLastEventId: true, // Send Last-Event-ID to resume stream
+  useLastEventId: true // Send Last-Event-ID to resume stream
 });
 
-source.addEventListener("error", (e) => {
-  // Error events will include retry information
-  console.log("Connection lost, retrying...");
-  console.log(`Attempt ${source.retryCount} of ${source.maxRetries || "∞"}`);
+source.addEventListener("error", () => {
+  if (source.maxRetries && source.retryCount >= source.maxRetries) {
+    console.log("Max retries reached, connection permanently closed");
+  } else if (source.autoReconnect) {
+    console.log(`Connection lost, will retry in ${source.reconnectDelay}ms`);
+    console.log(`Attempt ${source.retryCount + 1}${source.maxRetries ? '/' + source.maxRetries : ''}`);
+  }
 });
 ```
 
