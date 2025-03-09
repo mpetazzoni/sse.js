@@ -203,19 +203,35 @@
           addMessage("Connection opened", "info");
         });
 
-        source.addEventListener("error", function (e) {
-          const msg =
-            "Connection error: " + (e.responseCode || "Unknown error");
+        source.addEventListener("error", (e) => {
+          const msg = e.data
+            ? `Error: ${e.data}`
+            : "Error: Unknown error occurred";
           addMessage(msg, "error");
 
-          if (source.autoReconnect) {
-            const nextAttempt = source.retryCount + 1;
-            const retryMsg = source.maxRetries && nextAttempt <= source.maxRetries
-              ? `Will attempt to reconnect in ${options.reconnectDelay}ms (attempt ${nextAttempt}/${source.maxRetries})`
-              : source.maxRetries
-              ? `Max retries (${source.maxRetries}) reached, connection permanently closed`
-              : `Will attempt to reconnect in ${options.reconnectDelay}ms`;
-            addMessage(retryMsg, "info");
+          const nextAttempt = source.retryCount + 1;
+          if (source.maxRetries && nextAttempt > source.maxRetries) {
+            // Max retries reached, reset button
+            button.value = "Start";
+            button.onclick = start;
+            addMessage(
+              `Max retries (${source.maxRetries}) reached, connection permanently closed`,
+              "info"
+            );
+          } else if (!source.autoReconnect) {
+            // No auto-reconnect, reset button
+            button.value = "Start";
+            button.onclick = start;
+          } else {
+            // Still retrying
+            addMessage(
+              `Will attempt to reconnect in ${
+                options.reconnectDelay
+              }ms (attempt ${nextAttempt}${
+                source.maxRetries ? "/" + source.maxRetries : ""
+              })`,
+              "info"
+            );
           }
         });
 
