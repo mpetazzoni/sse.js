@@ -1,13 +1,40 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>sse.js test</title>
     <style type="text/css">
-body { width: 60%; margin: 2em auto; font-family: monospace; }
-#content { display: flex; flex-direction: column-reverse; }
-#content div { border: 1px #eee solid; background: #f5f5f5; padding: 1em; margin: 1em 0; }
-#content span { display: block; text-align: right; color: #ccc; font-size: small; }
-#content pre { margin: 0; }
+      body {
+        width: 60%;
+        margin: 2em auto;
+        font-family: monospace;
+      }
+      #content {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+      #content div {
+        border: 1px #eee solid;
+        background: #f5f5f5;
+        padding: 1em;
+        margin: 1em 0;
+      }
+      #content span {
+        display: block;
+        text-align: right;
+        color: #ccc;
+        font-size: small;
+      }
+      #content pre {
+        margin: 0;
+      }
+      .error {
+        background-color: #fee !important;
+        color: #900;
+      }
+      .info {
+        background-color: #eef !important;
+        color: #009;
+      }
     </style>
   </head>
   <body>
@@ -21,56 +48,98 @@ body { width: 60%; margin: 2em auto; font-family: monospace; }
         <input type="url" id="url" size="40" required />
         <input type="button" id="go" value="Start" />
       </section>
-      <section id="content">
-      </section>
+      <section id="content"></section>
     </main>
 
     <script type="module">
-      import { SSE } from './lib/sse.js';
+      import { SSE } from "./lib/sse.js";
 
-      var url = document.getElementById('url');
-      var button = document.getElementById('go');
-      var content = document.getElementById('content');
+      var url = document.getElementById("url");
+      var button = document.getElementById("go");
+      var content = document.getElementById("content");
       var source;
 
-      function show(e) {
-        if (typeof e.data === 'string' && e.data.startsWith('{')) {
-          e.data = JSON.parse(e.data);
-        }
-        if (typeof e.data.time === 'number') {
-          e.data.time = new Date(e.data.time * 1000);
+      function addMessage(data, type = "") {
+        var el = document.createElement("div");
+        if (type) {
+          el.className = type;
         }
 
-        var el = document.createElement('div');
-
-        var span = document.createElement('span');
+        var span = document.createElement("span");
         span.appendChild(document.createTextNode(new Date().toString()));
         el.appendChild(span);
 
-        var pre = document.createElement('pre');
-        pre.appendChild(document.createTextNode(JSON.stringify(e.data, null, 2)));
+        var pre = document.createElement("pre");
+        pre.appendChild(
+          document.createTextNode(
+            typeof data === "object"
+              ? JSON.stringify(data, null, 2)
+              : String(data)
+          )
+        );
         el.appendChild(pre);
 
         content.append(el);
       }
 
-      function start() {
-        content.innerHTML = '';
+      function show(e) {
+        console.log("Received SSE message:", e);
 
-        source = new SSE(url.value, {start: false, debug: true});
-        source.addEventListener('message', show);
+        let data = e.data;
+        try {
+          if (
+            typeof data === "string" &&
+            (data.startsWith("{") || data.startsWith("["))
+          ) {
+            data = JSON.parse(data);
+            if (data.time && typeof data.time === "number") {
+              data.time = new Date(data.time * 1000);
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to parse message data as JSON:", err);
+        }
+
+        addMessage(data);
+      }
+
+      function start() {
+        if (!url.value) {
+          addMessage("Please enter a valid SSE URL", "error");
+          return;
+        }
+
+        content.innerHTML = "";
+        addMessage("Connecting to " + url.value, "info");
+
+        source = new SSE(url.value, { start: false, debug: true });
+
+        source.addEventListener("message", show);
+
+        source.addEventListener("open", function (e) {
+          addMessage("Connection opened", "info");
+        });
+
+        source.addEventListener("error", function (e) {
+          addMessage(
+            "Connection error: " + (e.responseCode || "Unknown error"),
+            "error"
+          );
+        });
+
         source.stream();
 
-        button.value = 'Stop';
+        button.value = "Stop";
         button.onclick = reset;
       }
 
       function reset() {
         if (source) {
           source.close();
+          addMessage("Connection closed", "info");
         }
 
-        button.value = 'Start';
+        button.value = "Start";
         button.onclick = start;
       }
 
