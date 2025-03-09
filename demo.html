@@ -35,6 +35,20 @@
         background-color: #eef !important;
         color: #009;
       }
+      .controls {
+        margin: 1em 0;
+        display: flex;
+        gap: 1em;
+        align-items: center;
+      }
+      .controls label {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .controls input[type="number"] {
+        width: 6em;
+      }
     </style>
   </head>
   <body>
@@ -47,6 +61,22 @@
         <label for="url">Enter a SSE source URL:</label>
         <input type="url" id="url" size="40" required />
         <input type="button" id="go" value="Start" />
+        <div class="controls">
+          <label>
+            <input type="checkbox" id="auto-reconnect" checked />
+            Auto-reconnect
+          </label>
+          <label>
+            <input
+              type="number"
+              id="reconnect-delay"
+              value="3000"
+              min="500"
+              step="500"
+            />
+            ms delay
+          </label>
+        </div>
       </section>
       <section id="content"></section>
     </main>
@@ -57,6 +87,8 @@
       var url = document.getElementById("url");
       var button = document.getElementById("go");
       var content = document.getElementById("content");
+      var autoReconnect = document.getElementById("auto-reconnect");
+      var reconnectDelay = document.getElementById("reconnect-delay");
       var source;
 
       function addMessage(data, type = "") {
@@ -112,7 +144,21 @@
         content.innerHTML = "";
         addMessage("Connecting to " + url.value, "info");
 
-        source = new SSE(url.value, { start: false, debug: true });
+        const options = {
+          start: false,
+          debug: true,
+          autoReconnect: autoReconnect.checked,
+          reconnectDelay: parseInt(reconnectDelay.value, 10),
+        };
+
+        if (options.autoReconnect) {
+          addMessage(
+            `Auto-reconnect enabled (${options.reconnectDelay}ms delay)`,
+            "info"
+          );
+        }
+
+        source = new SSE(url.value, options);
 
         source.addEventListener("message", show);
 
@@ -121,10 +167,15 @@
         });
 
         source.addEventListener("error", function (e) {
-          addMessage(
-            "Connection error: " + (e.responseCode || "Unknown error"),
-            "error"
-          );
+          const msg =
+            "Connection error: " + (e.responseCode || "Unknown error");
+          addMessage(msg, "error");
+          if (options.autoReconnect) {
+            addMessage(
+              `Will attempt to reconnect in ${options.reconnectDelay}ms`,
+              "info"
+            );
+          }
         });
 
         source.stream();
