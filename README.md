@@ -25,14 +25,14 @@ EventSource = SSE;
 From a module context:
 
 ```js
-import { SSE } from './sse.js';
+import { SSE } from "./sse.js";
 ```
 
 From a non-module context:
 
 ```js
 (async () => {
-  const { SSE } = import('./sse.js');
+  const { SSE } = import("./sse.js");
   window.SSE = SSE;
 })();
 ```
@@ -50,7 +50,7 @@ one or more listeners, and activate the stream:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('message', function(e) {
+source.addEventListener("message", function (e) {
   // Assuming we receive JSON-encoded data payloads:
   var payload = JSON.parse(e.data);
   console.log(payload);
@@ -72,7 +72,7 @@ source.stream();
 ### Passing custom headers
 
 ```js
-var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
+var source = new SSE(url, { headers: { Authorization: "Bearer 0xdeadbeef" } });
 ```
 
 ### Making a POST request and overriding the HTTP method
@@ -80,8 +80,10 @@ var source = new SSE(url, {headers: {'Authorization': 'Bearer 0xdeadbeef'}});
 To make a HTTP POST request, simply specify a `payload` in the options:
 
 ```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!'});
+var source = new SSE(url, {
+  headers: { "Content-Type": "text/plain" },
+  payload: "Hello, world!",
+});
 ```
 
 Alternatively, you can also manually override the HTTP method used to
@@ -89,21 +91,214 @@ perform the request, regardless of the presence of a `payload` option, by
 specifying the `method` option:
 
 ```js
-var source = new SSE(url, {headers: {'Content-Type': 'text/plain'},
-                           payload: 'Hello, world!',
-                           method: 'GET'});
+var source = new SSE(url, {
+  headers: { "Content-Type": "text/plain" },
+  payload: "Hello, world!",
+  method: "GET",
+});
 ```
 
-### Options reference
+### Auto-reconnect functionality
 
-| Name              | Description |
-| ----------------- | ----------- |
-| `headers`         | A map of additional headers to use on the HTTP request |
-| `method`          | Override HTTP method (defaults to `GET`, unless a payload is given, in which case it defaults to `POST`) |
-| `payload`         | An optional request payload to sent with the request |
-| `withCredentials` | If set to `true`, CORS requests will be set to include credentials |
-| `start`           | Automatically execute the request and start streaming (defaults to `true`) |
-| `debug`           | Log debug messages to the console about received chunks and dispatched events (defaults to `false`) |
+`SSE` supports automatic reconnection when the connection is lost or encounters an error. This can be enabled through the options:
+
+```js
+var source = new SSE(url, {
+  autoReconnect: true, // Enable auto-reconnect
+  reconnectDelay: 3000, // Wait 3 seconds before reconnecting
+  maxRetries: null, // Retry indefinitely (set a number to limit retries)
+  useLastEventId: true, // Send Last-Event-ID header on reconnect (recommended)
+});
+```
+
+When auto-reconnect is enabled:
+
+- The connection will automatically attempt to reconnect after any connection loss or error
+- Each reconnection attempt will wait for the specified delay (in milliseconds)
+- If maxRetries is set, reconnection attempts will stop after that number is reached
+- If useLastEventId is true, the last received event ID will be sent in the `Last-Event-ID` header
+- Auto-reconnect is automatically disabled when calling `close()` on the SSE instance
+- The retry count is reset whenever a successful connection is established
+
+You can dynamically check the auto-reconnect and retry status:
+
+```js
+if (source.autoReconnect) {
+  console.log("Auto-reconnect is enabled");
+  if (source.maxRetries) {
+    console.log(`Attempt ${source.retryCount} of ${source.maxRetries}`);
+  }
+}
+```
+
+### Reconnecting after failure
+
+There are two ways to handle reconnection after a connection failure:
+
+1. **Automatic Reconnection (Recommended)**
+
+```js
+const source = new SSE(url, {
+  autoReconnect: true,
+  reconnectDelay: 3000,
+  maxRetries: 5, // Stop after 5 failed attempts
+});
+
+source.addEventListener("error", (e) => {
+  if (source.maxRetries && source.retryCount >= source.maxRetries) {
+    console.log("Max retries reached, connection permanently closed");
+  } else {
+    console.log(
+      `Connection lost. ${
+        source.maxRetries
+          ? `Attempt ${source.retryCount + 1}/${source.maxRetries}`
+          : "Will"
+      } reconnect in 3s...`
+    );
+  }
+});
+```
+
+2. **Manual Reconnection**
+
+```js
+const source = new SSE(url, { autoReconnect: false });
+
+source.addEventListener("error", (e) => {
+  console.log("Connection lost");
+  // Wait a bit then reconnect
+  setTimeout(() => {
+    source.stream();
+  }, 3000);
+});
+
+// Or reconnect on abort
+source.addEventListener("abort", () => {
+  source.stream();
+});
+```
+
+### Last-Event-ID Support
+
+The `Last-Event-ID` header is a crucial part of the SSE specification that helps maintain message continuity across reconnections. When enabled (default), `SSE` will automatically:
+
+1. Track the last received event ID
+2. Send this ID in the `Last-Event-ID` header on reconnection attempts
+3. Allow the server to resume the event stream from where it left off
+
+This behavior can be controlled with the `useLastEventId` option:
+
+```js
+const source = new SSE(url, {
+  useLastEventId: true, // Recommended: follows SSE specification
+});
+```
+
+It's strongly recommended to keep `useLastEventId` enabled as it's part of the SSE specification and ensures no events are lost during reconnection. Only disable it if you have specific requirements that conflict with this behavior.
+
+You can access the last event ID at any time:
+
+```js
+console.log("Last received event ID:", source.lastEventId);
+```
+
+Example of proper Last-Event-ID handling:
+
+```js
+const source = new SSE("/api/events", {
+  autoReconnect: true,
+  useLastEventId: true,
+  headers: { "Client-ID": "dashboard-1" },
+});
+
+source.addEventListener("message", (e) => {
+  if (e.id) {
+    console.log(`Received event ${e.id}`);
+    // The lastEventId is automatically tracked
+    // and will be sent on next reconnection
+  }
+});
+
+source.addEventListener("open", (e) => {
+  if (source.lastEventId) {
+    console.log(`Reconnected, resuming from event ${source.lastEventId}`);
+  }
+});
+```
+
+## Event stream order
+
+The SSE events are dispatched in the following order:
+
+| Event              | Description                   | When                                          | Event Properties            |
+| ------------------ | ----------------------------- | --------------------------------------------- | --------------------------- |
+| `readystatechange` | State changed to `CONNECTING` | When `stream()` is called                     | `readyState: 0`             |
+| `open`             | Connection established        | When server response headers are received     | `responseCode`, `headers`   |
+| `readystatechange` | State changed to `OPEN`       | After connection is established               | `readyState: 1`             |
+| `message`          | Data received                 | When server sends data                        | `data`, `id`, `lastEventId` |
+| `error`            | Connection error              | When connection fails or server returns error | `responseCode`, `data`      |
+| `readystatechange` | State changed to `CLOSED`     | When connection is closed                     | `readyState: 2`             |
+| `abort`            | Connection aborted            | When `close()` is called                      | None                        |
+
+When auto-reconnect is enabled, the following additional events may occur:
+
+| Event              | Description                   | When                             | Event Properties |
+| ------------------ | ----------------------------- | -------------------------------- | --------------- |
+| `readystatechange` | State changed to `CONNECTING` | When reconnection starts         | `readyState: 0` |
+| `error`            | Connection error              | When connection fails            | None            |
+| `readystatechange` | State changed to `CLOSED`     | After error, before next attempt | `readyState: 2` |
+
+The cycle repeats until either:
+- A successful connection is established (retry count resets to 0)
+- Max retries is reached (auto-reconnect is disabled)
+- `close()` is called (auto-reconnect is disabled)
+
+All events also include a `source` property referencing the SSE instance that dispatched the event.
+
+Note: When a server-sent event specifies an `event` field, both the `message` event and an event with the specified type will be dispatched. For example, if the server sends:
+
+```
+event: update
+data: {"status": "completed"}
+```
+
+Two events will be dispatched:
+
+1. An `update` event with `data: {"status": "completed"}`
+2. A `message` event with the same data
+
+## Expected response from server
+
+It is expected that the server will return the data in the following
+format, as defined [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
+
+```
+event: <type>\n
+data: <data>\n
+\n
+```
+
+Note that the space after the colon field delimiter is optional. A space
+after the colon, if present, is always removed from the parsed field
+value [as mandated by the SSE specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
+If your SSE server does _not_ output with a space after the colon
+delimiter, it must take care to correctly express field values with
+leading spaces.
+
+## Options reference
+
+| Name              | Description                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `headers`         | An object containing the request headers to send with the request. Example: `{'Authorization': 'Bearer 0123456789'}` |
+| `payload`         | The request payload to send with the request. Example: `'{"filter": "temperature > 25"}'`                            |
+| `method`          | The HTTP method to use. If not specified, defaults to `POST` if there is a payload, otherwise `GET`                  |
+| `withCredentials` | Send cookies with the request. Default: `false`                                                                      |
+| `start`           | Start streaming immediately. Default: `true`                                                                         |
+| `debug`           | Enable debug logging. Default: `false`                                                                               |
+| `autoReconnect`   | Automatically attempt to reconnect when connection is lost. Default: `false`                                         |
+| `reconnectDelay`  | Time in milliseconds to wait before attempting to reconnect. Default: `3000`                                         |
+| `maxRetries`      | Maximum number of reconnection attempts. Set to `null` for unlimited retries. Default: `null`                        |
+| `useLastEventId`  | Send the `Last-Event-ID` header on reconnection to resume the stream. Default: `true`                                |
 
 ## Events
 
@@ -141,11 +336,9 @@ respectivitely:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('open', function(e) {
-  console.log('Got a '
-    + e.data.responseCode
-    + ' response with headers: '
-    + e.data.headers
+source.addEventListener("open", function (e) {
+  console.log(
+    "Got a " + e.data.responseCode + " response with headers: " + e.data.headers
   );
 });
 source.stream();
@@ -165,8 +358,8 @@ events, simply register your callback with the appropriate event type:
 
 ```js
 var source = new SSE(url);
-source.addEventListener('status', function(e) {
-  console.log('System status is now: ' + e.data);
+source.addEventListener("status", function (e) {
+  console.log("System status is now: " + e.data);
 });
 source.stream();
 ```
@@ -181,41 +374,34 @@ source.onstatus = function(e) { ... };
 You can mix both `on<event>` and `addEventListener()`. The `on<event>`
 handler is always called first if it is defined.
 
-## Event stream order
-
-In a regular stream, you should expect to receive events in the
-following order:
-
-1. A `readystatechange` event with a `readyState` of `CONNECTING (0)`;
-1. An `open` event, with the endpoint's `responseCode` and `headers`;
-1. A `readystatechange` event with a `readyState` of `OPEN (1)`;
-1. One `message` event for each received server-sent event, plus the
-   event-type-specific event for the same;
-
-When closing the stream, you should also expect:
-
-1. A `readystatechange` event with a `readyState` of `CLOSED (2)`;
-1. An `abort` event.
-
-## Expected response from server
-
-It is expected that the server will return the data in the following
-format, as defined [here](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events):
-
-```
-event: <type>\n
-data: <data>\n
-\n
-```
-
-Note that the space after the colon field delimiter is optional. A space
-after the colon, if present, is always removed from the parsed field
-value [as mandated by the SSE specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
-If your SSE server does _not_ output with a space after the colon
-delimiter, it must take care to correctly express field values with
-leading spaces.
-
 ## Advanced usage
+
+### Auto-reconnect behavior
+
+When `autoReconnect` is enabled, SSE will automatically attempt to reconnect when the connection is lost or an error occurs. This behavior can be fine-tuned using several options:
+
+```javascript
+const source = new SSE("/events", {
+  autoReconnect: true, // Enable automatic reconnection
+  reconnectDelay: 5000, // Wait 5 seconds between attempts
+  maxRetries: 3, // Only try 3 times before giving up
+  useLastEventId: true // Send Last-Event-ID to resume stream
+});
+
+source.addEventListener("error", () => {
+  if (source.maxRetries && source.retryCount >= source.maxRetries) {
+    console.log("Max retries reached, connection permanently closed");
+  } else if (source.autoReconnect) {
+    console.log(`Connection lost, will retry in ${source.reconnectDelay}ms`);
+    console.log(`Attempt ${source.retryCount + 1}${source.maxRetries ? '/' + source.maxRetries : ''}`);
+  }
+});
+```
+
+The retry count is reset to 0 after a successful connection. Auto-reconnect is automatically disabled in two cases:
+
+1. When `maxRetries` is reached (if set)
+2. When `close()` is explicitly called
 
 ### `withCredentials` support
 
@@ -224,23 +410,12 @@ request that the outgoing HTTP request be made with a CORS credentials
 mode of `include`, as per the [HTML Living
 Standard](https://fetch.spec.whatwg.org/#concept-request-credentials-mode).
 
-### Reconnecting after failure
+### Browser Compatibility
 
-SSE.js does not (yet) automatically reconnect on failure; you can listen
-for the `abort` event and decide whether to reconnect and restart the
-event stream by calling `stream()`.
+- Modern browsers: Full support for all features
+- Internet Explorer 11: Requires `custom-event-polyfill` for proper `CustomEvent` support
 
-SSE.js _will_ set the `Last-Event-ID` header on reconnection to the last
-seen event ID value (if any), as per the EventSource specification.
-
-## Development
-
-### TODOs and caveats
-
-- Internet Explorer 11 does not support arbitrary values in
-  `CustomEvent`s.  A dependency on `custom-event-polyfill` is necessary
-  for IE11 compatibility.
-- Improve `XmlHttpRequest` error handling and connection states
+## Development and Release
 
 ### Releasing `sse.js`
 

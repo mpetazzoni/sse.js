@@ -1,13 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>sse.js test</title>
     <style type="text/css">
-body { width: 60%; margin: 2em auto; font-family: monospace; }
-#content { display: flex; flex-direction: column-reverse; }
-#content div { border: 1px #eee solid; background: #f5f5f5; padding: 1em; margin: 1em 0; }
-#content span { display: block; text-align: right; color: #ccc; font-size: small; }
-#content pre { margin: 0; }
+      body {
+        width: 60%;
+        margin: 2em auto;
+        font-family: monospace;
+      }
+      #content {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+      #content div {
+        border: 1px #eee solid;
+        background: #f5f5f5;
+        padding: 1em;
+        margin: 1em 0;
+      }
+      #content span {
+        display: block;
+        text-align: right;
+        color: #ccc;
+        font-size: small;
+      }
+      #content pre {
+        margin: 0;
+      }
+      .error {
+        background-color: #fee !important;
+        color: #900;
+      }
+      .info {
+        background-color: #eef !important;
+        color: #009;
+      }
+      .controls {
+        margin: 1em 0;
+        display: flex;
+        gap: 1em;
+        align-items: center;
+      }
+      .controls label {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .controls input[type="number"] {
+        width: 6em;
+      }
+      .controls-group {
+        border: 1px solid #eee;
+        padding: 1em;
+        margin: 1em 0;
+        border-radius: 4px;
+      }
+      .controls-group h3 {
+        margin: 0 0 1em 0;
+        color: #666;
+        font-size: 0.9em;
+      }
     </style>
   </head>
   <body>
@@ -20,57 +72,182 @@ body { width: 60%; margin: 2em auto; font-family: monospace; }
         <label for="url">Enter a SSE source URL:</label>
         <input type="url" id="url" size="40" required />
         <input type="button" id="go" value="Start" />
+
+        <div class="controls-group">
+          <h3>Connection Settings</h3>
+          <div class="controls">
+            <label>
+              <input type="checkbox" id="auto-reconnect" checked />
+              Auto-reconnect
+            </label>
+            <label>
+              <input
+                type="number"
+                id="reconnect-delay"
+                value="3000"
+                min="500"
+                step="500"
+              />
+              ms delay
+            </label>
+          </div>
+          <div class="controls">
+            <label>
+              <input type="checkbox" id="use-last-event-id" />
+              Use Last-Event-ID header
+            </label>
+          </div>
+          <div class="controls">
+            <label>
+              <input
+                type="number"
+                id="max-retries"
+                value=""
+                min="1"
+                placeholder="∞"
+              />
+              max retries (empty = unlimited)
+            </label>
+          </div>
+        </div>
       </section>
-      <section id="content">
-      </section>
+      <section id="content"></section>
     </main>
 
     <script type="module">
-      import { SSE } from './lib/sse.js';
+      import { SSE } from "./lib/sse.js";
 
-      var url = document.getElementById('url');
-      var button = document.getElementById('go');
-      var content = document.getElementById('content');
+      var url = document.getElementById("url");
+      var button = document.getElementById("go");
+      var content = document.getElementById("content");
+      var autoReconnect = document.getElementById("auto-reconnect");
+      var reconnectDelay = document.getElementById("reconnect-delay");
+      var useLastEventId = document.getElementById("use-last-event-id");
+      var maxRetries = document.getElementById("max-retries");
       var source;
 
-      function show(e) {
-        if (typeof e.data === 'string' && e.data.startsWith('{')) {
-          e.data = JSON.parse(e.data);
-        }
-        if (typeof e.data.time === 'number') {
-          e.data.time = new Date(e.data.time * 1000);
+      function addMessage(data, type = "") {
+        var el = document.createElement("div");
+        if (type) {
+          el.className = type;
         }
 
-        var el = document.createElement('div');
-
-        var span = document.createElement('span');
+        var span = document.createElement("span");
         span.appendChild(document.createTextNode(new Date().toString()));
         el.appendChild(span);
 
-        var pre = document.createElement('pre');
-        pre.appendChild(document.createTextNode(JSON.stringify(e.data, null, 2)));
+        var pre = document.createElement("pre");
+        pre.appendChild(
+          document.createTextNode(
+            typeof data === "object"
+              ? JSON.stringify(data, null, 2)
+              : String(data)
+          )
+        );
         el.appendChild(pre);
 
         content.append(el);
       }
 
-      function start() {
-        content.innerHTML = '';
+      function show(e) {
+        console.log("Received SSE message:", e);
 
-        source = new SSE(url.value, {start: false, debug: true});
-        source.addEventListener('message', show);
+        let data = e.data;
+        try {
+          if (
+            typeof data === "string" &&
+            (data.startsWith("{") || data.startsWith("["))
+          ) {
+            data = JSON.parse(data);
+            if (data.time && typeof data.time === "number") {
+              data.time = new Date(data.time * 1000);
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to parse message data as JSON:", err);
+        }
+
+        addMessage(data);
+      }
+
+      function start() {
+        if (!url.value) {
+          addMessage("Please enter a valid SSE URL", "error");
+          return;
+        }
+
+        content.innerHTML = "";
+        addMessage("Connecting to " + url.value, "info");
+
+        const options = {
+          start: false,
+          debug: true,
+          autoReconnect: autoReconnect.checked,
+          reconnectDelay: parseInt(reconnectDelay.value, 10),
+          useLastEventId: useLastEventId.checked,
+          maxRetries: maxRetries.value ? parseInt(maxRetries.value, 10) : null,
+        };
+
+        if (options.autoReconnect) {
+          const retryMsg = options.maxRetries
+            ? `Auto-reconnect enabled (${options.reconnectDelay}ms delay, max ${options.maxRetries} retries)`
+            : `Auto-reconnect enabled (${options.reconnectDelay}ms delay, unlimited retries)`;
+          addMessage(retryMsg, "info");
+        }
+
+        source = new SSE(url.value, options);
+
+        source.addEventListener("message", show);
+
+        source.addEventListener("open", function (e) {
+          addMessage("Connection opened", "info");
+        });
+
+        source.addEventListener("error", (e) => {
+          const msg = e.data
+            ? `Error: ${e.data}`
+            : "Error: Unknown error occurred";
+          addMessage(msg, "error");
+
+          const nextAttempt = source.retryCount + 1;
+          if (source.maxRetries && nextAttempt > source.maxRetries) {
+            // Max retries reached, reset button
+            button.value = "Start";
+            button.onclick = start;
+            addMessage(
+              `Max retries (${source.maxRetries}) reached, connection permanently closed`,
+              "info"
+            );
+          } else if (!source.autoReconnect) {
+            // No auto-reconnect, reset button
+            button.value = "Start";
+            button.onclick = start;
+          } else {
+            // Still retrying
+            addMessage(
+              `Will attempt to reconnect in ${
+                options.reconnectDelay
+              }ms (attempt ${nextAttempt}${
+                source.maxRetries ? "/" + source.maxRetries : ""
+              })`,
+              "info"
+            );
+          }
+        });
+
         source.stream();
 
-        button.value = 'Stop';
+        button.value = "Stop";
         button.onclick = reset;
       }
 
       function reset() {
         if (source) {
           source.close();
+          addMessage("Connection closed", "info");
         }
 
-        button.value = 'Start';
+        button.value = "Start";
         button.onclick = start;
       }
 
