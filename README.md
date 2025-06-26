@@ -338,7 +338,7 @@ respectivitely:
 var source = new SSE(url);
 source.addEventListener("open", function (e) {
   console.log(
-    "Got a " + e.data.responseCode + " response with headers: " + e.data.headers
+    "Got a " + e.responseCode + " response with headers: " + e.headers
   );
 });
 source.stream();
