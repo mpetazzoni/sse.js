@@ -72,6 +72,22 @@ export type SSEOptions = {
    * - debugging flag
    */
   debug?: boolean;
+  /**
+   * - flag, if connection should auto-reconnect on disconnect/error
+   */
+  autoReconnect?: boolean;
+  /**
+   * - delay in ms before reconnecting
+   */
+  reconnectDelay?: number;
+  /**
+   * - maximum number of reconnect attempts
+   */
+  maxRetries?: number | null;
+  /**
+   * - flag, if Last-Event-ID header should be sent
+   */
+  useLastEventId?: boolean;
 };
 export type _SSEvent = {
   id: string;
