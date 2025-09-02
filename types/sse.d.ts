@@ -2,14 +2,16 @@ export type SSE = {
   /** Constructor. */
   new (url: string, options?: SSEOptions): SSE;
 
+  url: string;
+
   /**
    * - headers
    */
   headers: SSEHeaders;
   /**
-   * - payload as a Blob, ArrayBuffer, Dataview, FormData, URLSearchParams, or string
+   * - payload
    */
-  payload?: Blob | ArrayBuffer | DataView | FormData | URLSearchParams | string;
+  payload?: SSEPayload;
   /**
    * - HTTP Method
    */
@@ -22,12 +24,31 @@ export type SSE = {
    * - debugging flag
    */
   debug: boolean;
+  /**
+   * - flag, if connection should auto-reconnect on disconnect/error
+   */
+  autoReconnect: boolean;
+  /**
+   * - delay in ms before reconnecting
+   */
+  reconnectDelay: number;
+  /**
+   * - maximum number of reconnect attempts
+   */
+  maxRetries: number | null;
+  /**
+   * - flag, if Last-Event-ID header should be sent
+   */
+  useLastEventId: boolean;
+  reconnectTimer: number | null;
+  retryCount: number;
   FIELD_SEPARATOR: string;
   listeners: Record<string, Function[]>;
   xhr: XMLHttpRequest | null;
   readyState: number;
   progress: number;
   chunk: string;
+  lastEventId: string;
   INITIALIZING: -1;
   CONNECTING: 0;
   OPEN: 1;
@@ -47,15 +68,16 @@ export type SSE = {
 export type SSEHeaders = {
   [key: string]: string;
 };
+export type SSEPayload = Document | Blob | ArrayBuffer | TypedArray | DataView | FormData | URLSearchParams | string | null;
 export type SSEOptions = {
   /**
    * - headers
    */
   headers?: SSEHeaders;
   /**
-   * - payload as a Blob, ArrayBuffer, Dataview, FormData, URLSearchParams, or string
+   * - payload
    */
-  payload?: Blob | ArrayBuffer | DataView | FormData | URLSearchParams | string;
+  payload?: SSEPayload;
   /**
    * - HTTP Method
    */
@@ -92,6 +114,10 @@ export type SSEOptions = {
 export type _SSEvent = {
   id: string;
   data: string;
+  source?: SSE;
+  responseCode?: number;
+  lastEventId?: string;
+  headers?: Record<string, string[]>;
 };
 export type _ReadyStateEvent = {
   readyState: number;
