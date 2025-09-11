@@ -68,7 +68,7 @@ export type SSE = {
 export type SSEHeaders = {
   [key: string]: string;
 };
-export type SSEPayload = Document | Blob | ArrayBuffer | TypedArray | DataView | FormData | URLSearchParams | string | null;
+export type SSEPayload = Blob | ArrayBuffer | DataView | FormData | URLSearchParams | string | null;
 export type SSEOptions = {
   /**
    * - headers
