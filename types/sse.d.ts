@@ -113,7 +113,7 @@ export type SSEOptions = {
 };
 export type _SSEvent = {
   id: string;
-  data: string;
+  data: any;
   source?: SSE;
   responseCode?: number;
   lastEventId?: string;
