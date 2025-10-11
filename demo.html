@@ -4,7 +4,7 @@
     <title>sse.js test</title>
     <style type="text/css">
       body {
-        width: 60%;
+        width: 65%;
         margin: 2em auto;
         font-family: monospace;
       }
@@ -26,6 +26,9 @@
       }
       #content pre {
         margin: 0;
+      }
+      #cancel {
+        display: none;
       }
       .error {
         background-color: #fee !important;
@@ -72,6 +75,7 @@
         <label for="url">Enter a SSE source URL:</label>
         <input type="url" id="url" size="40" required />
         <input type="button" id="go" value="Start" />
+        <input type="button" id="cancel" value="Abort Signal"/>
 
         <div class="controls-group">
           <h3>Connection Settings</h3>
@@ -119,12 +123,14 @@
 
       var url = document.getElementById("url");
       var button = document.getElementById("go");
+      var abortButton = document.getElementById("cancel");
       var content = document.getElementById("content");
       var autoReconnect = document.getElementById("auto-reconnect");
       var reconnectDelay = document.getElementById("reconnect-delay");
       var useLastEventId = document.getElementById("use-last-event-id");
       var maxRetries = document.getElementById("max-retries");
       var source;
+      var abortController;
 
       function addMessage(data, type = "") {
         var el = document.createElement("div");
@@ -176,6 +182,8 @@
           return;
         }
 
+        abortController = new AbortController();
+        abortButton.style.display = 'inline-block';
         content.innerHTML = "";
         addMessage("Connecting to " + url.value, "info");
 
@@ -186,6 +194,7 @@
           reconnectDelay: parseInt(reconnectDelay.value, 10),
           useLastEventId: useLastEventId.checked,
           maxRetries: maxRetries.value ? parseInt(maxRetries.value, 10) : null,
+          signal: abortController.signal
         };
 
         if (options.autoReconnect) {
@@ -249,8 +258,21 @@
 
         button.value = "Start";
         button.onclick = start;
+        abortButton.style.display = 'none';
       }
 
+      function abort() {
+        if (abortController) {
+          abortController.abort();
+          addMessage("Connection aborted using signal", "info");
+          // Reset the state after abort
+          button.value = "Start"; 
+          button.onclick = start
+          abortButton.style.display = 'none';
+        }
+      }
+
+      abortButton.onclick = abort;
       reset();
     </script>
   </body>

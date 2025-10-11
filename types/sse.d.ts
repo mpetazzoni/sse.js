@@ -95,6 +95,10 @@ export type SSEOptions = {
    */
   debug?: boolean;
   /**
+   * - AbortSignal to abort the stream
+   */
+  signal?: AbortSignal;
+  /**
    * - flag, if connection should auto-reconnect on disconnect/error
    */
   autoReconnect?: boolean;
