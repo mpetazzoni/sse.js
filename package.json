@@ -1,6 +1,6 @@
 {
   "name": "sse.js",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "description": "A flexible Server-Sent Events source; supports POST requests and custom headers",
   "main": "./lib/sse.js",
   "type": "module",
