@@ -126,7 +126,7 @@ export type SSEvent = Event & _SSEvent;
 export type ReadyStateEvent = SSEvent & _ReadyStateEvent;
 export type AddEventListener = (type: string, listener: Function) => void;
 export type RemoveEventListener = (type: string, listener: Function) => void;
-export type DispatchEvent = (type: string, listener: Function) => boolean;
+export type DispatchEvent = (e: CustomEvent | null) => boolean;
 export type Stream = () => void;
 export type Close = () => void;
 export type OnMessage = (event: SSEvent) => void;
