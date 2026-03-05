@@ -255,17 +255,7 @@ The cycle repeats until either:
 
 All events also include a `source` property referencing the SSE instance that dispatched the event.
 
-Note: When a server-sent event specifies an `event` field, both the `message` event and an event with the specified type will be dispatched. For example, if the server sends:
-
-```
-event: update
-data: {"status": "completed"}
-```
-
-Two events will be dispatched:
-
-1. An `update` event with `data: {"status": "completed"}`
-2. A `message` event with the same data
+Note: When a server-sent event specifies an `event` field, only an event of that type is dispatched. If no `event` field is set, the default `message` event type is used. This matches the behavior of the native `EventSource` API.
 
 ## Expected response from server
 
