@@ -1,0 +1,14 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "sse.js",
+  "description": "Browser JavaScript Server-Sent Events (SSE) client and EventSource replacement supporting POST request bodies, custom authentication headers, cookies, named events, and optional reconnection. Includes TypeScript declarations. Useful for authenticated HTTP event streams and SSE-framed AI application responses.",
+  "rules": [
+    "Install the npm package sse.js and import { SSE } from 'sse.js' with a bundler. Direct browser module imports need a URL to the module file, not a bare package name.",
+    "The runtime requires browser APIs XMLHttpRequest and CustomEvent; this is not a native Node.js SSE client.",
+    "For JSON POST streams, set method: 'POST', payload: JSON.stringify(body), and the Content-Type header. Use start: false to register listeners before calling stream().",
+    "Event data is text, not automatically decoded JSON. Listen for the server's named event types; events without a name use 'message'.",
+    "autoReconnect defaults to false. Reconnecting repeats the request; enable it only when replay is safe. Last-Event-ID resumption requires server support and does not guarantee duplicate-free or loss-free delivery.",
+    "Call close() to abort the request and disable automatic reconnection. Keep provider secret API keys on your backend rather than embedding them in browser code.",
+    "This library consumes SSE streams; it is not a Model Context Protocol (MCP) SDK and does not handle JSON-RPC or non-SSE JSON responses."
+  ]
+}
